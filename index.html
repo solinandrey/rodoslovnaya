@@ -280,6 +280,13 @@ a.pc:hover{border-color:var(--stamp)}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:14px;color:var(--ink-3)}
 .crumbs a{color:var(--ink-2)}
 .p-head{display:grid;gap:10px;margin-top:14px;padding-bottom:26px;border-bottom:1px solid var(--rule)}
+.p-head.has-face{grid-template-columns:auto minmax(0,1fr);column-gap:22px;align-items:end}
+.p-id{display:grid;gap:10px;min-width:0}
+.p-face{width:150px;aspect-ratio:4/5;padding:0;border:0;border-radius:8px;overflow:hidden;background:var(--photo-ground);box-shadow:var(--shadow);cursor:zoom-in}
+.p-face img{width:100%;height:100%;object-fit:cover;display:block}
+.pp-body .p-face{width:116px}
+.pp-body .p-head.has-face{column-gap:16px}
+@media (max-width:520px){.p-face{width:104px}.p-head.has-face{column-gap:14px}}
 .p-head .sn{font:500 13px/1.3 var(--f-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2)}
 .p-head .dates{margin:0;font:400 15px/1.4 var(--f-mono);color:var(--ink-2);font-variant-numeric:tabular-nums}
 .p-head .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
@@ -341,6 +348,8 @@ a.pc:hover{border-color:var(--stamp)}
 .mapbox{position:relative;z-index:0;isolation:isolate;height:min(64vh,620px);min-height:340px;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--photo-ground)}
 .mapbox .wait{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;color:var(--ink-3);font-size:14.5px}
 .pin{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--stamp);color:#fff;border:2px solid #fff;box-shadow:0 1px 5px rgba(27,29,42,.45);font:600 11.5px/1 var(--f-ui)}
+.pin.s{width:18px;height:18px}
+.minimap{position:relative;z-index:0;isolation:isolate;height:190px;border:1px solid var(--rule);border-radius:12px;overflow:hidden;background:var(--photo-ground)}
 .pin.a{background:#fff;color:var(--stamp);border:2px dashed var(--stamp)}
 .leaflet-container{font:400 14px/1.45 var(--f-ui)}
 .leaflet-popup-content{margin:12px 14px;display:grid;gap:6px}
@@ -432,6 +441,16 @@ const view = document.getElementById('view');
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const isPage = n => n && ['doc','family','version','patr'].includes(n.st);
+/* the living have a card too — a name and family ties, nothing else */
+/* portraits: which photograph shows the face best (and how to crop it); anyone else with photographs gets their first one */
+const FACES = [['flor','flor-1920s.jpg'],['u3','ershova-group.jpg'],['maria','maria-nkps-1927.jpg','93% 45%'],['vstep','vstep-1960.jpg'],['anatoly','anatoly-1954.jpg']];
+function faceOf(n) {
+  if (!n.ph || !n.ph.length) return null;
+  const f = FACES.find(x => x[0] === n.id), i = f ? Math.max(0, n.ph.findIndex(x => x.src.endsWith('/' + f[1]))) : 0;
+  return { i, p: n.ph[i], pos: f && f[2] };
+}
+const isLiving = n => n && (n.st === 'living' || n.st === 'self');
+const canOpen = n => isPage(n) || isLiving(n);
 const isAncestor = n => n && !['self','living','unknown'].includes(n.st);
 const year = n => { const m = String(n.d || '').match(/\d{4}/); return m ? +m[0] : null; };
 const norm = s => String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/[ѣ]/g, 'е').replace(/[іi]/g, 'и').replace(/ѳ/g, 'ф').replace(/ъ(?=\s|$|[.,;:)»])/g, '');
@@ -494,7 +513,7 @@ const searchBox = (id, ph, val = '') => `<div class="search"><svg viewBox="0 0 2
 /* ---------- search ---------- */
 function hay(n) {
   if (!n._hay) {
-    n._name = norm(`${n.sn} ${n.gn} ${n.gn} ${n.sn}`);
+    n._name = norm(`${n.sn || ''} ${n.gn} ${n.gn} ${n.sn || ''}`);
     n._hay = norm([n.sn, n.gn, n.written, n.pl, n.places, n.tag && n.tag.t, (n.geo || []).map(k => GEO[k] && GEO[k].n).join(' ')].join(' '));
   }
   return n._hay;
@@ -502,7 +521,7 @@ function hay(n) {
 function find(q) {
   const words = norm(q).split(/\s+/).filter(Boolean);
   if (!words.length) return [];
-  return ORDER.filter(n => isPage(n) && words.every(w => hay(n).includes(w)))
+  return ORDER.concat(KIN).filter(n => canOpen(n) && words.every(w => hay(n).includes(w)))
     .sort((a, b) => (words.every(w => b._name.includes(w)) - words.every(w => a._name.includes(w))) || a.gen - b.gen);
 }
 
@@ -527,7 +546,6 @@ function vHome() {
       <span class="names">Фамилии: ${esc(sns.join(', '))}</span>
     </a>`;
   }).join('');
-  const FACES = [['flor','flor-1920s.jpg'],['u3','ershova-group.jpg'],['maria','maria-nkps-1927.jpg','93% 45%'],['vstep','vstep-1960.jpg'],['anatoly','anatoly-1954.jpg']];
   const faces = FACES.filter(([id]) => P[id] && P[id].ph).map(([id, file, pos]) => {
     const n = P[id], p = n.ph.find(x => x.src.endsWith('/' + file)) || n.ph[0];
     return `<a class="face" href="#p-${id}"><span class="frame"><img src="${p.src}" alt="${esc(p.cap)}" loading="lazy"${pos ? ` style="object-position:${pos}"` : ''}></span><b>${esc(full(n))}</b><span>${esc(n.d || '')}${lineOf(n) ? ' · ' + esc(lineOf(n).name) : ''}</span></a>`;
@@ -658,7 +676,7 @@ function vPhotos() {
 }
 
 /* Leaflet and the OpenStreetMap tiles are fetched only when the Places page is opened; without them the list below still works */
-let leaflet = null, placesMap = null;
+let leaflet = null, placesMap = null, miniMap = null;
 function loadLeaflet() {
   const add = (tag, at) => new Promise((ok, no) => { const e = Object.assign(document.createElement(tag), at); e.crossOrigin = 'anonymous'; e.onload = ok; e.onerror = no; document.head.appendChild(e); });
   const cdn = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
@@ -736,7 +754,7 @@ function vAbout() {
 function vPerson(id) {
   const n = P[id];
   if (!n) return vMissing();
-  if (!isPage(n)) { location.replace('#tree'); return; }
+  if (!canOpen(n)) { location.replace('#tree'); return; }
   lastPerson = id;
   view.innerHTML = personHtml(n, false);
   document.title = `${full(n)} — Родословная Солиных`;
@@ -744,7 +762,23 @@ function vPerson(id) {
   /* «Назад» returns to wherever the reader came from; opened by a direct link, it leads to the tree */
   document.getElementById('p-back').addEventListener('click', e => { if (route.n > 1) { e.preventDefault(); history.back(); } });
 }
+/* the person's places on a small map: one point is shown with the country around it, several are fitted together */
+function miniMapInit(box) {
+  const keys = box.dataset.geo.split(',').filter(k => GEO[k]);
+  loadLeaflet().then(L => {
+    if (!document.body.contains(box)) return;
+    if (miniMap) miniMap.remove();
+    const map = miniMap = L.map(box, { scrollWheelZoom: false, dragging: !L.Browser.mobile, zoomSnap: 0.5 });
+    map.attributionControl.setPrefix(false);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    const pts = keys.map(k => { const g = GEO[k], at = g.ll.split(',').map(Number);
+      L.marker(at, { title: g.n, icon: L.divIcon({ className: '', html: `<span class="pin s${g.a ? ' a' : ''}"></span>`, iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -8] }) }).bindPopup(`<b>${g.a ? '≈ ' : ''}${esc(g.n)}</b>`).addTo(map);
+      return at; });
+    if (pts.length === 1) map.setView(pts[0], 7); else map.fitBounds(pts, { padding: [28, 28], maxZoom: 11 });
+  }).catch(() => { box.hidden = true; });
+}
 function bindPerson(root) {
+  const mm = root.querySelector('.minimap'); if (mm) miniMapInit(mm);
   const sa = root.querySelector('.showall');
   if (sa) sa.addEventListener('click', () => { root.querySelectorAll('[data-more]').forEach(f => { f.hidden = false; }); sa.remove(); });
 }
@@ -760,7 +794,7 @@ function personHtml(n, inPanel) {
   const famLink = (who, k) => {
     const x = P[k];
     if (!x || x.st === 'unknown') return `<div class="x"><small>${who}</small><b>неизвестен${who === 'Мать' ? 'а' : ''}</b></div>`;
-    if (!isPage(x)) return `<div class="x"><small>${who}</small><b>${esc(full(x))}</b></div>`;
+    if (!canOpen(x)) return `<div class="x"><small>${who}</small><b>${esc(full(x))}</b></div>`;
     return `<a href="${href(x.id)}"><small>${who}</small><b>${esc(full(x))}</b>${x.d ? `<span class="ref">${esc(x.d)}</span>` : ''}</a>`;
   };
   const c = P[n.child];
@@ -773,8 +807,12 @@ function personHtml(n, inPanel) {
   const kidsAll = (n.kids || []).concat(sp ? (sp.kids || []).filter(k => !k.one) : []).map(k => ({ k, y: yr(k.b) }));
   (levels[0] || []).forEach(x => { const y = born(x); let at = y ? 0 : kidsAll.length; if (y) kidsAll.forEach((it, i) => { if (it.y && it.y <= y) at = i + 1; }); kidsAll.splice(at, 0, { x, y }); });
   const kidLi = it => it.x
-    ? `<li class="on">${isPage(it.x) ? `<a href="${href(it.x.id)}"><b>${esc(full(it.x))}</b></a>` : `<b>${esc(full(it.x))}</b>`}${it.x.d ? `<span class="ref">${esc(it.x.d)}</span>` : ''}</li>`
+    ? `<li class="on">${canOpen(it.x) ? `<a href="${href(it.x.id)}"><b>${esc(full(it.x))}</b></a>` : `<b>${esc(full(it.x))}</b>`}${it.x.d ? `<span class="ref">${esc(it.x.d)}</span>` : ''}</li>`
     : `<li${it.k.q ? ' class="q"' : ''}><b>${esc(it.k.n)}</b>${it.k.b ? `<span class="ref">${esc(it.k.b)}</span>` : ''}${it.k.t ? `<small>${esc(it.k.t)}</small>` : ''}</li>`;
+  /* husband or wife: the one named in the data, or the other parent of the child on the tree */
+  const mate = n.sp ? P[n.sp] : KIN.find(k => k.sp === n.id) || (sp && sp.st !== 'unknown' ? sp : null);
+  const mateWho = mate && (mate.role === 'm' || (!mate.role && (/^жена/.test(mate.meta || '') || /а$/.test(mate.sn || ''))) ? 'Жена' : 'Муж');
+  const geoKeys = (n.geo || []).filter(k => GEO[k]), face = faceOf(n);
   const kidsMore = sp && (sp.kids || []).some(k => k.one) ? `<p class="caveat">Другие дети ${sp.role === 'f' ? 'мужа' : 'жены'} — на странице: ${isPage(sp) ? `<a href="${href(sp.id)}">${esc(full(sp))}</a>` : esc(full(sp))}.</p>` : '';
   const photos = (n.ph || []).map(p => ({ src: p.src, cap: p.cap, who: [n] }));
   LB_SETS.person = photos;
@@ -793,19 +831,23 @@ function personHtml(n, inPanel) {
   const up = [n.f, n.m].map(k => P[k]).filter(isPage);
   return `
     ${inPanel ? '' : `<nav class="crumbs"><a class="back" id="p-back" href="#tree/${n.id}">← Назад</a>${ln ? `<a href="#line-${ln.slug}">Линия: ${ln.name}</a>` : ''}</nav>`}
-    <header class="p-head">
+    <header class="p-head${face ? ' has-face' : ''}">
+      ${face ? `<button class="p-face" type="button" data-lb="person" data-i="${face.i}" aria-label="Открыть фотографию"><img src="${face.p.src}" alt="${esc(face.p.cap)}"${face.pos ? ` style="object-position:${face.pos}"` : ''}></button>` : ''}
+      <div class="p-id">
       <span class="sn">${esc(n.sn)}</span>
       <${H} class="h1">${esc(n.gn)}</${H}>
-      ${n.d || n.pl ? `<p class="dates">${esc([n.d, n.pl].filter(Boolean).join(' · '))}</p>` : ''}
-      <div class="badges"><span class="chip ${n.st}" title="${esc(STATUS[n.st].hint || '')}">${mk(n.st)}${esc(STATUS[n.st].label)}</span>${n.tag ? `<span class="tag ${esc(n.tag.k)}">${esc(n.tag.t)}</span>` : ''}${inPanel ? '' : `<a class="chip tree-link" href="#tree/${n.id}">Показать на древе</a>`}</div>
+      ${n.d || n.pl || (n.kin && n.meta) ? `<p class="dates">${esc([n.d, n.pl, n.kin && n.meta].filter(Boolean).join(' · '))}</p>` : ''}
+      <div class="badges">${isLiving(n) ? '' : `<span class="chip ${n.st}" title="${esc(STATUS[n.st].hint || '')}">${mk(n.st)}${esc(STATUS[n.st].label)}</span>`}${n.tag ? `<span class="tag ${esc(n.tag.k)}">${esc(n.tag.t)}</span>` : ''}${inPanel ? '' : `<a class="chip tree-link" href="#tree/${n.id}">Показать на древе</a>`}</div>
+      </div>
     </header>
     <div class="p-cols">
-      <div class="p-main">${main.join('') || '<p class="caveat">Пока известно только имя.</p>'}</div>
+      <div class="p-main">${main.join('') || `<p class="caveat">${isLiving(n) ? 'О ныне живущих здесь только имена и родственные связи.' : 'Пока известно только имя.'}</p>`}</div>
       <aside class="p-rail">
         ${rows.length || n.written ? `<div class="panel">${rows.length ? `<dl>${rows.map(r => `<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl>` : ''}${n.written ? `<p class="written">Как записано в документе<q>${esc(n.written)}</q></p>` : ''}</div>` : ''}
-        <section class="blk"><h2>Семья</h2><div class="fam">${famLink('Отец', n.f)}${famLink('Мать', n.m)}</div></section>
+        ${geoKeys.length ? `<div class="minimap" data-geo="${geoKeys.join(',')}" aria-label="Места на карте"></div>` : ''}
+        <section class="blk"><h2>Семья</h2><div class="fam">${n.f || !isLiving(n) ? famLink('Отец', n.f) : ''}${n.m || !isLiving(n) ? famLink('Мать', n.m) : ''}${mate ? famLink(mateWho, mate.id) : ''}</div></section>
         ${kidsAll.length ? `<section class="blk"><h2>Дети</h2><ul class="kids">${kidsAll.map(kidLi).join('')}</ul>${kidsMore}</section>` : ''}
-        ${levels.length > 1 ? `<section class="blk"><h2>Потомки</h2><dl class="desc">${levels.slice(1).map((l, i) => `<dt>${DESC[i] || (i + 2) + '-е колено'}</dt><dd>${l.map(k => isPage(k) ? `<a href="${href(k.id)}">${esc(full(k))}</a>` : esc(full(k))).join(', ')}</dd>`).join('')}</dl></section>` : ''}
+        ${levels.length > 1 ? `<section class="blk"><h2>Потомки</h2><dl class="desc">${levels.slice(1).map((l, i) => `<dt>${DESC[i] || (i + 2) + '-е колено'}</dt><dd>${l.map(k => canOpen(k) ? `<a href="${href(k.id)}">${esc(full(k))}</a>` : esc(full(k))).join(', ')}</dd>`).join('')}</dl></section>` : ''}
       </aside>
     </div>
     ${up.length ? `<nav class="pnav" aria-label="Дальше вверх по древу">${up.map(p => personCard(p, false)).join('')}</nav>` : ''}`;
@@ -840,13 +882,13 @@ function vTree() {
   const world = document.getElementById('world');
   treeEls = {};
   ORDER.concat(KIN).forEach(n => {
-    const el = document.createElement(isPage(n) ? 'a' : 'div'), st = n.st === 'self' ? 'living' : n.st;
-    if (isPage(n)) { el.href = '#tree/' + n.id; el.draggable = false; }
+    const el = document.createElement(canOpen(n) ? 'a' : 'div'), st = n.st === 'self' ? 'living' : n.st;
+    if (canOpen(n)) { el.href = '#tree/' + n.id; el.draggable = false; }
     el.className = `tc s-${st}${n.kin ? ' kin' : ''}`;
     if (st === 'unknown') el.innerHTML = `<span class="gn">?</span><span class="meta">${n.role === 'm' ? 'мать неизвестна' : 'отец неизвестен'}</span>`;
     else if (st === 'living') el.innerHTML = `<span class="sn">${esc(n.sn || '')}</span><span class="gn">${esc(n.gn)}</span>${n.kin && n.meta ? `<span class="meta">${esc(n.meta)}</span>` : ''}`;
     else { const pl = n.pl || n.meta; el.innerHTML = `<span class="sn">${esc(n.sn)}</span><span class="gn">${esc(n.gn)}</span>${n.d ? `<span class="d">${esc(n.d)}</span>` : ''}${pl ? `<span class="meta" title="${esc(pl)}">${esc(pl)}</span>` : ''}${n.tag ? `<span class="tag ${n.tag.k}" title="${esc(n.tag.t)}">${esc(n.tag.t)}</span>` : ''}<i class="mk ${n.st}" aria-hidden="true"></i>`; }
-    if (isPage(n)) { el.addEventListener('mouseenter', () => treeHighlight(n.id)); el.addEventListener('focus', () => { treeHighlight(n.id); }); }
+    if (canOpen(n)) { el.addEventListener('mouseenter', () => treeHighlight(n.id)); el.addEventListener('focus', () => { treeHighlight(n.id); }); }
     treeEls[n.id] = el; world.appendChild(el);
   });
   world.addEventListener('mouseleave', () => treeHighlight(lastPerson));
@@ -1006,14 +1048,15 @@ function treeFocus(id, s, anim = true) {
   const tv = document.getElementById('tv'), n = P[id]; if (!tv || !n) return;
   s = clampS(s || 0.95);
   T = { s, x: tv.clientWidth / 2 - (n.x + TL.W / 2) * s, y: tv.clientHeight / 2 - (n.y + n.h / 2) * s };
-  tApply(anim); if (isPage(n)) { lastPerson = id; treeHighlight(id); }
+  tApply(anim); if (canOpen(n)) { lastPerson = id; treeHighlight(id); }
 }
 /* the person panel: opened from a card (#tree/<id>), closed back to #tree */
 function panelShow(id) {
   const pp = document.getElementById('pp'); if (!pp) return;
   const n = id && P[id], stage = pp.parentNode;
-  if (!n || !isPage(n)) { pp.hidden = true; pp.innerHTML = ''; stage.classList.remove('has-pp'); return; }
-  pp.innerHTML = `<div class="pp-bar"><a href="#p-${n.id}">Открыть отдельной страницей →</a><button class="pp-x" id="pp-x" type="button" aria-label="Закрыть">×</button></div><div class="pp-body">${personHtml(n, true)}</div>`;
+  if (miniMap) { miniMap.remove(); miniMap = null; }
+  if (!n || !canOpen(n)) { pp.hidden = true; pp.innerHTML = ''; stage.classList.remove('has-pp'); return; }
+  pp.innerHTML = `<div class="pp-bar">${isPage(n) ? `<a href="#p-${n.id}">Открыть отдельной страницей →</a>` : '<span></span>'}<button class="pp-x" id="pp-x" type="button" aria-label="Закрыть">×</button></div><div class="pp-body">${personHtml(n, true)}</div>`;
   pp.hidden = false; stage.classList.add('has-pp');
   bindPerson(pp);
   document.getElementById('pp-x').addEventListener('click', () => { location.hash = '#tree'; });
@@ -1149,6 +1192,7 @@ view.addEventListener('click', e => {
 function route() {
   lbClose();
   if (placesMap) { placesMap.remove(); placesMap = null; }
+  if (miniMap) { miniMap.remove(); miniMap = null; }
   const h = decodeURIComponent(location.hash.slice(1));
   let cur = 'home';
   document.title = 'Семейный архив Солиных';
