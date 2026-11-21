@@ -264,6 +264,16 @@ a.pc:hover{border-color:var(--stamp)}
 /* person page */
 .crumbs .back{font-weight:600;color:var(--stamp);text-decoration:none}
 .crumbs .back:hover{text-decoration:underline}
+.blk .kids{list-style:none;padding:0;gap:6px}
+.kids li{display:grid;gap:1px;padding:8px 12px;border-radius:8px;border:1px solid var(--rule);background:var(--paper);font-size:14px}
+.kids li.on{background:var(--card);border-color:var(--rule-strong)}
+.kids li.q{border-style:dashed}
+.kids li.q b{font-weight:400;font-style:italic}
+.kids b{font:700 15px/1.3 var(--f-display)}
+.kids a{color:var(--ink);text-decoration:none}
+.kids a:hover b{color:var(--stamp)}
+.kids .ref{margin-top:0}
+.kids small{font-size:12.5px;line-height:1.4;color:var(--ink-2)}
 .desc{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;margin:0;font-size:14px}
 .desc dt{color:var(--ink-3)}
 .desc dd{margin:0;min-width:0}
@@ -325,6 +335,18 @@ a.pc:hover{border-color:var(--stamp)}
 .place h3{font:700 18px/1.25 var(--f-display)}
 .place .who{font-size:14.5px;color:var(--ink-2)}
 .place .map{font-size:14px}
+.place .acts{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px}
+.place button{padding:0;border:0;background:none;color:var(--stamp);font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+/* the map is its own stacking context, so its layers stay under the sticky top bar */
+.mapbox{position:relative;z-index:0;isolation:isolate;height:min(64vh,620px);min-height:340px;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--photo-ground)}
+.mapbox .wait{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;color:var(--ink-3);font-size:14.5px}
+.pin{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--stamp);color:#fff;border:2px solid #fff;box-shadow:0 1px 5px rgba(27,29,42,.45);font:600 11.5px/1 var(--f-ui)}
+.pin.a{background:#fff;color:var(--stamp);border:2px dashed var(--stamp)}
+.leaflet-container{font:400 14px/1.45 var(--f-ui)}
+.leaflet-popup-content{margin:12px 14px;display:grid;gap:6px}
+.leaflet-popup-content b{font:700 16px/1.25 var(--f-display)}
+.leaflet-popup-content .who{color:var(--ink-2)}
+.leaflet-container a{color:var(--stamp)}
 
 /* about */
 .about{display:grid;gap:34px;max-width:72ch}
@@ -635,15 +657,51 @@ function vPhotos() {
     <section class="sec" style="margin-top:28px"><div class="gal big">${ph.map((p, i) => shot(p, i, 'all', true)).join('')}</div></section>`;
 }
 
+/* Leaflet and the OpenStreetMap tiles are fetched only when the Places page is opened; without them the list below still works */
+let leaflet = null, placesMap = null;
+function loadLeaflet() {
+  const add = (tag, at) => new Promise((ok, no) => { const e = Object.assign(document.createElement(tag), at); e.crossOrigin = 'anonymous'; e.onload = ok; e.onerror = no; document.head.appendChild(e); });
+  const cdn = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
+  return leaflet || (leaflet = Promise.all([
+    add('link', { rel: 'stylesheet', href: cdn + 'leaflet.min.css', integrity: 'sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb' }),
+    add('script', { src: cdn + 'leaflet.min.js', integrity: 'sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO' })
+  ]).then(() => window.L).catch(e => { leaflet = null; throw e; }));
+}
 function vPlaces() {
   const rows = Object.keys(GEO).map(k => ({ k, g: GEO[k], who: ORDER.filter(n => isPage(n) && (n.geo || []).includes(k)) }))
     .filter(r => r.who.length).sort((a, b) => b.who.length - a.who.length);
+  const whoLinks = r => r.who.map(n => `<a href="#p-${n.id}">${esc(full(n))}</a>`).join(', ');
   view.innerHTML = `
     <header class="p-head" style="margin-top:0">
       <h1 class="h1">Места</h1>
-      <p class="lede">Деревни, города, улицы и кладбища, где жили и похоронены предки. Ссылка открывает место на карте; знак «≈» значит, что точка примерная.</p>
+      <p class="lede">Деревни, города, улицы и кладбища, где жили и похоронены предки. Нажмите на отметку, чтобы увидеть, кто оттуда; число на ней — сколько человек. Отметка с пунктиром значит, что точка примерная.</p>
     </header>
-    <section class="sec" style="margin-top:28px"><div class="places">${rows.map(r => `<div class="place"><h3>${r.g.a ? '≈ ' : ''}${esc(r.g.n)}</h3><span class="who">${r.who.map(n => `<a href="#p-${n.id}">${esc(full(n))}</a>`).join(', ')}</span><a class="map" href="${mapUrl(r.g)}" target="_blank" rel="noopener">Открыть на карте</a></div>`).join('')}</div></section>`;
+    <div class="mapbox" id="map" style="margin-top:24px"><p class="wait">Загружаю карту…</p></div>
+    <section class="sec" style="margin-top:28px"><div class="places">${rows.map(r => `<div class="place" id="pl-${r.k}"><h3>${r.g.a ? '≈ ' : ''}${esc(r.g.n)}</h3><span class="who">${whoLinks(r)}</span><span class="acts"><button type="button" data-pin="${r.k}">Показать на карте</button><a class="map" href="${mapUrl(r.g)}" target="_blank" rel="noopener">Открыть в Google Картах</a></span></div>`).join('')}</div></section>`;
+  const box = document.getElementById('map');
+  loadLeaflet().then(L => {
+    if (route.cur !== 'places' || !document.body.contains(box)) return;
+    box.innerHTML = '';
+    const map = placesMap = L.map(box, { scrollWheelZoom: false, zoomSnap: 0.5 });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    /* places that share one point (a village and its later name) get one pin */
+    const spots = {}; rows.forEach(r => (spots[r.g.ll] = spots[r.g.ll] || []).push(r));
+    const pins = {}, pts = [];
+    Object.keys(spots).forEach(ll => {
+      const rs = spots[ll], at = ll.split(',').map(Number), n = new Set(rs.flatMap(r => r.who.map(w => w.id))).size;
+      const m = L.marker(at, { title: rs.map(r => r.g.n).join('; '), icon: L.divIcon({ className: '', html: `<span class="pin${rs.every(r => r.g.a) ? ' a' : ''}">${n}</span>`, iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -12] }) })
+        .bindPopup(rs.map(r => `<b>${r.g.a ? '≈ ' : ''}${esc(r.g.n)}</b><span class="who">${whoLinks(r)}</span>`).join(''), { maxWidth: 300 }).addTo(map);
+      rs.forEach(r => { pins[r.k] = m; }); pts.push(at);
+    });
+    map.fitBounds(pts, { padding: [30, 30] });
+    /* the page scrolls with the wheel; the map zooms with it only after a click on the map */
+    map.on('click', () => map.scrollWheelZoom.enable()); box.addEventListener('mouseleave', () => map.scrollWheelZoom.disable());
+    view.querySelector('.places').addEventListener('click', e => {
+      const b = e.target.closest('[data-pin]'), m = b && pins[b.dataset.pin]; if (!m) return;
+      box.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+      map.setView(m.getLatLng(), Math.max(map.getZoom(), 11), { animate: !reduced }); m.openPopup();
+    });
+  }).catch(() => { if (document.body.contains(box)) box.innerHTML = '<p class="wait">Карта не загрузилась — нужен интернет. Места перечислены ниже, у каждого есть ссылка на карту.</p>'; });
 }
 
 function vAbout() {
@@ -706,11 +764,18 @@ function personHtml(n, inPanel) {
     return `<a href="${href(x.id)}"><small>${who}</small><b>${esc(full(x))}</b>${x.d ? `<span class="ref">${esc(x.d)}</span>` : ''}</a>`;
   };
   const c = P[n.child];
-  const childWho = c ? (c.role === 'f' || c.gen === 0 ? 'Сын' : 'Дочь') : '';
   /* descendants by generation, down to the living: every relative finds their own branch here */
   const levels = []; let cur = [n.id];
   for (;;) { const next = ORDER.concat(KIN).filter(k => cur.includes(k.f) || cur.includes(k.m)); if (!next.length) break; levels.push(next); cur = next.map(k => k.id); }
-  const DESC = ['Дети', 'Внуки', 'Правнуки', 'Праправнуки'];
+  const DESC = ['Внуки', 'Правнуки', 'Праправнуки'];
+  /* all the known children: those on the tree and those kept only as a list (`kids`, on one of the parents — the other parent shows them too, except a child marked `one`) */
+  const sp = c ? P[c.f === n.id ? c.m : c.f] : null, yr = t => { const m = String(t || '').match(/\d{4}/); return m ? +m[0] : null; };
+  const kidsAll = (n.kids || []).concat(sp ? (sp.kids || []).filter(k => !k.one) : []).map(k => ({ k, y: yr(k.b) }));
+  (levels[0] || []).forEach(x => { const y = born(x); let at = y ? 0 : kidsAll.length; if (y) kidsAll.forEach((it, i) => { if (it.y && it.y <= y) at = i + 1; }); kidsAll.splice(at, 0, { x, y }); });
+  const kidLi = it => it.x
+    ? `<li class="on">${isPage(it.x) ? `<a href="${href(it.x.id)}"><b>${esc(full(it.x))}</b></a>` : `<b>${esc(full(it.x))}</b>`}${it.x.d ? `<span class="ref">${esc(it.x.d)}</span>` : ''}</li>`
+    : `<li${it.k.q ? ' class="q"' : ''}><b>${esc(it.k.n)}</b>${it.k.b ? `<span class="ref">${esc(it.k.b)}</span>` : ''}${it.k.t ? `<small>${esc(it.k.t)}</small>` : ''}</li>`;
+  const kidsMore = sp && (sp.kids || []).some(k => k.one) ? `<p class="caveat">Другие дети ${sp.role === 'f' ? 'мужа' : 'жены'} — на странице: ${isPage(sp) ? `<a href="${href(sp.id)}">${esc(full(sp))}</a>` : esc(full(sp))}.</p>` : '';
   const photos = (n.ph || []).map(p => ({ src: p.src, cap: p.cap, who: [n] }));
   LB_SETS.person = photos;
   const main = [];
@@ -738,8 +803,9 @@ function personHtml(n, inPanel) {
       <div class="p-main">${main.join('') || '<p class="caveat">Пока известно только имя.</p>'}</div>
       <aside class="p-rail">
         ${rows.length || n.written ? `<div class="panel">${rows.length ? `<dl>${rows.map(r => `<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl>` : ''}${n.written ? `<p class="written">Как записано в документе<q>${esc(n.written)}</q></p>` : ''}</div>` : ''}
-        <section class="blk"><h2>Семья</h2><div class="fam">${famLink('Отец', n.f)}${famLink('Мать', n.m)}${c ? famLink(childWho, c.id) : ''}</div></section>
-        ${levels.length ? `<section class="blk"><h2>Потомки</h2><dl class="desc">${levels.map((l, i) => `<dt>${DESC[i] || (i + 1) + '-е колено'}</dt><dd>${l.map(k => isPage(k) ? `<a href="${href(k.id)}">${esc(full(k))}</a>` : esc(full(k))).join(', ')}</dd>`).join('')}</dl></section>` : ''}
+        <section class="blk"><h2>Семья</h2><div class="fam">${famLink('Отец', n.f)}${famLink('Мать', n.m)}</div></section>
+        ${kidsAll.length ? `<section class="blk"><h2>Дети</h2><ul class="kids">${kidsAll.map(kidLi).join('')}</ul>${kidsMore}</section>` : ''}
+        ${levels.length > 1 ? `<section class="blk"><h2>Потомки</h2><dl class="desc">${levels.slice(1).map((l, i) => `<dt>${DESC[i] || (i + 2) + '-е колено'}</dt><dd>${l.map(k => isPage(k) ? `<a href="${href(k.id)}">${esc(full(k))}</a>` : esc(full(k))).join(', ')}</dd>`).join('')}</dl></section>` : ''}
       </aside>
     </div>
     ${up.length ? `<nav class="pnav" aria-label="Дальше вверх по древу">${up.map(p => personCard(p, false)).join('')}</nav>` : ''}`;
@@ -1082,6 +1148,7 @@ view.addEventListener('click', e => {
 /* ---------- routing ---------- */
 function route() {
   lbClose();
+  if (placesMap) { placesMap.remove(); placesMap = null; }
   const h = decodeURIComponent(location.hash.slice(1));
   let cur = 'home';
   document.title = 'Семейный архив Солиных';
