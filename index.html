@@ -82,6 +82,9 @@ a:hover{color:var(--stamp)}
 
 main{padding-block:36px 72px;min-height:60vh}
 main.full{padding-block:12px 12px;min-height:0}
+/* on the tree page the sheet fills the screen and the page itself never scrolls, so a swipe on the tree can only move the tree */
+html.tree-mode,html.tree-mode body{overscroll-behavior:none}
+html.tree-mode footer{display:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .eyebrow{margin:0;font:500 12px/1.4 var(--f-mono);color:var(--ink-2)}
 h1,h2,h3{margin:0;text-wrap:balance}
@@ -269,6 +272,7 @@ a.pc:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--stamp);border-color
 .tv:focus-visible{box-shadow:0 0 0 2px var(--stamp)}
 .tv.grabbing{cursor:grabbing}
 .world{position:absolute;left:0;top:0;transform-origin:0 0}
+.world.moving{will-change:transform}
 .links{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
 .links path{fill:none;stroke:var(--ink-3);stroke-width:1.2}
 .links path.unk{stroke-dasharray:3 4;opacity:.45}
@@ -307,7 +311,12 @@ a.tc:hover{color:var(--ink)}
 .tc.flash{animation:flash 1.4s ease 2}
 @keyframes flash{50%{box-shadow:0 0 0 8px var(--mark),0 0 0 3px var(--stamp)}}
 .ruler{position:absolute;left:0;top:0;bottom:0;width:0;pointer-events:none}
-.ruler span{position:absolute;left:10px;top:0;white-space:nowrap;padding:4px 11px;border-radius:999px;background:var(--ink);color:var(--card);font:500 11.5px/1.3 var(--f-mono);box-shadow:0 1px 4px rgba(0,0,0,.22)}
+/* a generation badge is a switch: it brings its row forward and dims the rest of the tree */
+.ruler span{position:absolute;left:10px;top:0;white-space:nowrap;padding:4px 11px;border-radius:999px;background:var(--ink);color:var(--card);font:500 11.5px/1.3 var(--f-mono);box-shadow:0 1px 4px rgba(0,0,0,.22);pointer-events:auto;cursor:pointer}
+.ruler span:hover{background:var(--ink-2)}
+.ruler span.on,.ruler span.on:hover{background:var(--stamp)}
+.world.gen-mode .tc:not(.gen-on):not(.sel){opacity:.3}
+.world.gen-mode .links{opacity:.3}
 .ruler b{font-weight:500;margin-right:9px;padding-right:9px;border-right:1px solid rgba(255,255,255,.4)}
 .tv-ctl{position:absolute;right:12px;bottom:12px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:calc(100% - 24px)}
 .tv-ctl .grp{display:flex;align-items:center;background:var(--card);border:1px solid var(--line);overflow:hidden;border-radius:10px}
@@ -986,7 +995,7 @@ function vMissing() {
 }
 
 /* ---------- tree: bottom-up, pan and zoom ---------- */
-let lastPerson = null, treeEls = null, TL = null, T = null, treeState = null, focusOnTree = null;
+let lastPerson = null, treeEls = null, TL = null, T = null, treeState = null, focusOnTree = null, genOn = null;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function vTree() {
   view.innerHTML = `
@@ -1008,7 +1017,7 @@ function vTree() {
     <aside class="pp" id="pp" hidden aria-label="О человеке"></aside>
     </div>`;
   const world = document.getElementById('world');
-  treeEls = {};
+  treeEls = {}; genOn = null;
   ORDER.concat(KIN).forEach(n => {
     const el = document.createElement(canOpen(n) ? 'a' : 'div'), st = n.st === 'self' ? 'living' : n.st;
     if (canOpen(n)) { el.href = '#tree/' + n.id; el.draggable = false; }
@@ -1032,8 +1041,8 @@ function vTree() {
 }
 function sizeTv() {
   const tv = document.getElementById('tv'); if (!tv) return;
-  const top = tv.getBoundingClientRect().top + scrollY;
-  tv.style.height = Math.max(420, Math.round(innerHeight - top - 12)) + 'px';
+  const top = tv.getBoundingClientRect().top + scrollY, vh = window.visualViewport ? visualViewport.height : innerHeight;
+  tv.style.height = Math.max(240, Math.round(vh - top - 12)) + 'px';
 }
 function vElbow(x1, y1, x2, y2, ym) {
   if (Math.abs(x2 - x1) < 1) return `M${x1} ${y1}V${y2}`;
@@ -1136,7 +1145,8 @@ function treeLayout() {
   svg.innerHTML = paths;
   const trunk = ALL.filter(n => n.gen <= TRUNK);
   TL = { W, Ww, Wh, rowTop, rowH, maxGen, cross: bestC, trunk: { x0: Math.min(...trunk.map(n => n.x)), x1: Math.max(...trunk.map(n => n.x + W)), y0: rowTop[TRUNK], y1: Math.max(...trunk.map(n => n.y + n.h)) } };
-  document.getElementById('ruler').innerHTML = Object.keys(rowTop).map(g => { const [a, b] = genLabel(+g).split(' · '); return `<span data-g="${g}">${b ? `<b>${esc(a)}</b>${esc(b)}` : esc(a)}</span>`; }).join('');
+  document.getElementById('ruler').innerHTML = Object.keys(rowTop).map(g => { const [a, b] = genLabel(+g).split(' · '); return `<span data-g="${g}" role="button" tabindex="0" aria-pressed="false" title="Выделить это поколение">${b ? `<b>${esc(a)}</b>${esc(b)}` : esc(a)}</span>`; }).join('');
+  genShow(genOn);
   treeHighlight(lastPerson);
 }
 const clampS = s => Math.min(2, Math.max(minScale(), s));
@@ -1204,19 +1214,40 @@ function treeReveal(id) {
 }
 function flash(id) { const el = treeEls && treeEls[id]; if (!el || reduced) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 function bindPanZoom() {
-  const tv = document.getElementById('tv');
-  const pts = new Map(); let start = null, pinch = null, moved = false;
-  const rel = e => { const b = tv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+  const tv = document.getElementById('tv'), world = document.getElementById('world');
+  const pts = new Map(); let start = null, pinch = null, moved = false, box = null;
+  /* positions are measured against the sheet's box as it was when the gesture began, so nothing else moving on the page can shake the tree */
+  const rel = e => { const b = box || tv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+  let raf = 0; const paint = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; tApply(false); }); };
+  /* a flick keeps the tree gliding for a moment and slows to a stop, as on any phone map */
+  let fling = 0, vel = null, last = null;
+  const stopFling = () => { if (fling) cancelAnimationFrame(fling); fling = 0; world.classList.remove('moving'); };
+  const track = p => { const t = performance.now(); if (last && t > last.t) { const vx = (p.x - last.x) / (t - last.t), vy = (p.y - last.y) / (t - last.t); vel = vel ? { x: vel.x * .5 + vx * .5, y: vel.y * .5 + vy * .5 } : { x: vx, y: vy }; } last = { x: p.x, y: p.y, t }; };
+  const glide = () => {
+    if (reduced || !vel || !last || performance.now() - last.t > 90) return;
+    let { x: vx, y: vy } = vel, prev = performance.now();
+    const cap = 3.5, sp = Math.hypot(vx, vy); if (sp > cap) { vx *= cap / sp; vy *= cap / sp; }
+    if (Math.hypot(vx, vy) < .15) return;
+    world.classList.add('moving');
+    const step = now => { const dt = Math.min(34, now - prev); prev = now; T.x += vx * dt; T.y += vy * dt; const k = Math.pow(.9965, dt); vx *= k; vy *= k; tApply(false);
+      if (Math.hypot(vx, vy) > .02) fling = requestAnimationFrame(step); else stopFling(); };
+    fling = requestAnimationFrame(step);
+  };
   tv.addEventListener('dragstart', e => e.preventDefault());
+  /* iOS: keep the page and Safari's own pinch-zoom out of gestures on the tree; taps still reach the cards */
+  tv.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+  tv.addEventListener('gesturestart', e => e.preventDefault());
   tv.addEventListener('pointerdown', e => {
-    if (e.target.closest('.tv-ctl')) return;
+    stopFling();
+    if (e.target.closest('.tv-ctl, .ruler')) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (!pts.size) { box = tv.getBoundingClientRect(); vel = null; last = null; }
     pts.set(e.pointerId, rel(e));
-    if (pts.size === 1) { const p = rel(e); start = { x: p.x, y: p.y, tx: T.x, ty: T.y }; moved = false; }
+    if (pts.size === 1) { const p = rel(e); start = { x: p.x, y: p.y, tx: T.x, ty: T.y }; moved = false; track(p); }
     if (pts.size === 2) {
       const [a, b] = [...pts.values()];
       pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, s: T.s, tx: T.x, ty: T.y };
-      moved = true; pts.forEach((v, id) => { try { tv.setPointerCapture(id); } catch (_) {} });
+      moved = true; vel = null; world.classList.add('moving'); pts.forEach((v, id) => { try { tv.setPointerCapture(id); } catch (_) {} });
     }
   });
   tv.addEventListener('pointermove', e => {
@@ -1226,26 +1257,38 @@ function bindPanZoom() {
       const [a, b] = [...pts.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y) || 1, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       const s = clampS(pinch.s * d / pinch.d), wx = (pinch.mx - pinch.tx) / pinch.s, wy = (pinch.my - pinch.ty) / pinch.s;
-      T = { s, x: mx - wx * s, y: my - wy * s }; tApply(false); return;
+      T = { s, x: mx - wx * s, y: my - wy * s }; paint(); return;
     }
     if (!start) return;
     const dx = p.x - start.x, dy = p.y - start.y;
-    if (!moved && Math.hypot(dx, dy) > 6) { moved = true; tv.classList.add('grabbing'); try { tv.setPointerCapture(e.pointerId); } catch (_) {} }
-    if (moved) { T.x = start.tx + dx; T.y = start.ty + dy; tApply(false); }
+    if (!moved && Math.hypot(dx, dy) > 6) { moved = true; tv.classList.add('grabbing'); world.classList.add('moving'); try { tv.setPointerCapture(e.pointerId); } catch (_) {} }
+    if (moved) { T.x = start.tx + dx; T.y = start.ty + dy; if (!pinch) track(p); paint(); }
   });
   const end = e => {
     if (!pts.has(e.pointerId)) return;
     pts.delete(e.pointerId);
-    if (pts.size < 2) pinch = null;
+    if (pts.size < 2 && pinch) { pinch = null; vel = null; last = null; }
     if (pts.size === 1) { const p = [...pts.values()][0]; start = { x: p.x, y: p.y, tx: T.x, ty: T.y }; }
-    if (!pts.size) { start = null; tv.classList.remove('grabbing'); }
+    if (!pts.size) {
+      start = null; box = null; tv.classList.remove('grabbing');
+      if (raf) { cancelAnimationFrame(raf); raf = 0; tApply(false); }
+      world.classList.remove('moving');
+      if (moved && e.type === 'pointerup' && e.pointerType !== 'mouse') glide();
+    }
   };
   tv.addEventListener('pointerup', end); tv.addEventListener('pointercancel', end); tv.addEventListener('lostpointercapture', end);
   tv.addEventListener('click', e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
   /* a click on the empty sheet lets the chosen person go; a drag is not a click (the handler above swallows it) */
-  tv.addEventListener('click', e => { if (!e.target.closest('.tc, .tv-ctl') && location.hash.startsWith('#tree/')) location.hash = '#tree'; });
+  tv.addEventListener('click', e => {
+    const badge = e.target.closest('#ruler span');
+    if (badge) return genShow(genOn === +badge.dataset.g ? null : +badge.dataset.g);
+    if (e.target.closest('.tc, .tv-ctl')) return;
+    if (genOn != null) genShow(null);
+    if (location.hash.startsWith('#tree/')) location.hash = '#tree';
+  });
+  document.getElementById('ruler').addEventListener('keydown', e => { const sp = e.target.closest('span'); if (sp && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); sp.click(); } });
   tv.addEventListener('wheel', e => {
-    e.preventDefault();
+    e.preventDefault(); stopFling();
     const p = rel(e);
     const mouseWheel = e.deltaMode === 1 || (e.deltaX === 0 && Math.abs(e.deltaY) >= 40 && Number.isInteger(e.deltaY));
     if (e.ctrlKey || e.metaKey || mouseWheel) {
@@ -1269,6 +1312,14 @@ function bindPanZoom() {
   document.getElementById('z-root').addEventListener('click', () => treeStart(true));
 }
 /* hovering a card only previews its line of descent, in ink; the chosen person (the one open in the panel) keeps the red highlight until another is chosen */
+/* the generation chosen by its badge: its cards stay, the rest of the tree dims; null clears */
+function genShow(g) {
+  const world = document.getElementById('world'); if (!world) return;
+  genOn = g;
+  world.classList.toggle('gen-mode', g != null);
+  ORDER.concat(KIN).forEach(n => treeEls[n.id].classList.toggle('gen-on', g != null && n.gen === g));
+  document.querySelectorAll('#ruler span').forEach(sp => { const on = g != null && +sp.dataset.g === g; sp.classList.toggle('on', on); sp.setAttribute('aria-pressed', on); });
+}
 function treeHover(id) {
   const world = document.getElementById('world'), svg = document.getElementById('links');
   if (!world) return;
@@ -1300,7 +1351,8 @@ function treeHighlight(id) {
 /* Esc closes the panel, and leaves a person page the way «Назад» does (registered before the lightbox handler, so Esc closes an open photo first) */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || !lb.hidden) return;
-  if (route.cur === 'tree' && location.hash.startsWith('#tree/')) location.hash = '#tree';
+  if (route.cur === 'tree' && genOn != null) genShow(null);
+  else if (route.cur === 'tree' && location.hash.startsWith('#tree/')) location.hash = '#tree';
   else if (route.cur === 'person') { if (route.n > 1) history.back(); else location.hash = '#tree/' + lastPerson; }
 });
 
@@ -1358,6 +1410,7 @@ function route() {
   else vMissing();
   route.cur = cur; route.n = (route.n || 0) + 1;
   view.classList.toggle('full', cur === 'tree');
+  document.documentElement.classList.toggle('tree-mode', cur === 'tree');
   document.querySelectorAll('.nav a').forEach(a => { if (a.dataset.v === cur) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   window.scrollTo(0, 0);
 }
