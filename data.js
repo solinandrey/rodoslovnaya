@@ -109,7 +109,7 @@ window.FAMILY = {
 {"id":"morevDD","sn":"Морев","gn":"Дмитрий Дмитриевич","meta":"сын Евгении и Дмитрия","f":"morevD","m":"evgenia"},
 {"id":"marina","sn":"Бокова","gn":"Марина Анатольевна","meta":"урожд. Солина","f":"anatoly","m":"lyudmilaE"},
 {"id":"dmitryB","sn":"Боков","gn":"Дмитрий","m":"marina","sp":"marinaB"},
-{"id":"marinaB","sn":"","gn":"Марина","meta":"жена Дмитрия"},
+{"id":"marinaB","sn":"Бокова","gn":"Марина","meta":"жена Дмитрия"},
 {"id":"romaB","gn":"Рома","meta":"сын Дмитрия и Марины","f":"dmitryB","m":"marinaB"},
 {"id":"kirillB","gn":"Кирилл","meta":"сын Дмитрия и Марины","f":"dmitryB","m":"marinaB"},
 {"id":"igorB","gn":"Игорь","meta":"младший сын Дмитрия и Марины","f":"dmitryB","m":"marinaB"},
