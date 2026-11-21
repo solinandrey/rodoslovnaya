@@ -31,16 +31,9 @@
   --f-display:"PT Serif",Georgia,"Times New Roman",serif;
   --f-ui:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --paper:#131419; --card:#1C1D25; --ink:#E8E9EF; --ink-2:#A8ACBA; --ink-3:#80849A;
-    --rule:#353846; --rule-strong:#565A6B; --stamp:#AE97F2; --stamp-wash:#252036;
-    --warn:#EF8E62; --warn-wash:#36211A; --photo-ground:#24252F;
-    --shadow:0 1px 2px rgba(0,0,0,.35),0 3px 10px rgba(0,0,0,.25); --scrim:rgba(6,6,10,.9);
-    color-scheme:dark;
-  }
-}
+/* The site is light for everyone: it does not follow the system's dark mode. The dark set below applies only when a host sets data-theme="dark" (the claude.ai artifact copy). */
 :root[data-theme="dark"]{
   --paper:#131419; --card:#1C1D25; --ink:#E8E9EF; --ink-2:#A8ACBA; --ink-3:#80849A;
   --rule:#353846; --rule-strong:#565A6B; --stamp:#AE97F2; --stamp-wash:#252036;
@@ -72,6 +65,8 @@ a:hover{text-decoration-thickness:2px}
 @media (max-width:620px){.top .wrap{gap:2px 16px}.nav{flex-basis:100%;margin-bottom:2px}}
 
 main{padding-block:36px 64px;min-height:60vh}
+main.full{padding-block:12px 0;min-height:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .eyebrow{margin:0;font:500 12px/1.4 var(--f-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
 h1,h2,h3{margin:0;text-wrap:balance}
 .h1{font:700 clamp(32px,4.6vw,50px)/1.06 var(--f-display);letter-spacing:-.012em}
@@ -147,7 +142,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .chip{display:inline-flex;align-items:center;gap:7px;padding:4px 11px 4px 9px;border-radius:999px;font:500 13px/1.3 var(--f-ui);background:var(--card);border:1px solid var(--rule);color:var(--ink-2)}
 .chip .mk{margin:0}
 .chip.doc,.chip.version{color:var(--stamp);background:var(--stamp-wash);border-color:transparent}
-.tag{display:inline-flex;padding:4px 11px;border-radius:999px;font:500 13px/1.3 var(--f-ui);color:var(--stamp);background:var(--stamp-wash)}
+.tag{display:inline-flex;padding:4px 10px;border-radius:8px;font:500 13px/1.3 var(--f-ui);color:var(--stamp);background:var(--stamp-wash)}
 .tag.conflict{color:var(--warn);background:var(--warn-wash)}
 
 /* person cards (line pages, lists) */
@@ -189,14 +184,16 @@ a.pc:hover{border-color:var(--stamp)}
 
 /* tree: bottom-up pedigree on a pan-and-zoom canvas */
 .wrap.full{max-width:none}
-.tree-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,400px);gap:14px 32px;align-items:end;margin-bottom:16px}
-.tree-head .lede{font-size:15.5px;margin-top:8px}
-.tree-head .legend{grid-column:1/-1}
+.tree-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;margin-bottom:10px}
+.tree-head .legend{flex:1 1 auto}
+.th-tools{flex:0 1 340px}
+.th-tools .search input{height:40px;font-size:15px}
+.th-tools .search svg{top:11px}
 .th-tools{position:relative}
 .th-tools .hits{position:absolute;left:0;right:0;top:100%;z-index:6;margin-top:6px}
 .th-tools .hits button{display:grid;width:100%;text-align:left;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;padding:9px 10px;border-radius:7px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
 .th-tools .hits button:hover,.th-tools .hits button:focus-visible{background:var(--paper)}
-@media (max-width:760px){.tree-head{grid-template-columns:minmax(0,1fr)}.tree-head .lede{display:none}}
+@media (max-width:760px){.tree-head{gap:8px}.th-tools{flex:1 1 100%;order:-1}.tree-head .legend{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px 14px}.tree-head .legend li{white-space:nowrap;font-size:12.5px;gap:6px}}
 .legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 20px}
 .legend li{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-2)}
 .legend .mk{margin:0}
@@ -210,24 +207,24 @@ a.pc:hover{border-color:var(--stamp)}
 .links path{fill:none;stroke:var(--rule-strong);stroke-width:1.4}
 .links path.unk{stroke:var(--rule-strong);stroke-dasharray:3 4;opacity:.7}
 .links path.on{stroke:var(--stamp);stroke-width:2.6;stroke-dasharray:none;opacity:1}
-.tc{position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:2px;padding:9px 24px 10px 11px;background:var(--card);border:1px solid var(--rule-strong);border-radius:8px;color:var(--ink);text-decoration:none;box-shadow:var(--shadow);font-size:14px;-webkit-user-drag:none}
-.tc .sn{font:500 10.5px/1.3 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
-.tc .gn{font:700 15px/1.22 var(--f-display)}
-.tc .meta{font:400 12px/1.4 var(--f-ui);color:var(--ink-2)}
-.tc .d{display:block;font:400 11.5px/1.45 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.tc{position:absolute;left:0;top:0;display:grid;grid-template-rows:14px 38px 17px 17px 20px;row-gap:2px;align-content:start;height:136px;padding:9px 12px;background:var(--card);border:1px solid var(--rule-strong);border-radius:8px;color:var(--ink);text-decoration:none;box-shadow:var(--shadow);font-size:14px;overflow:hidden;-webkit-user-drag:none}
+/* every card is the same size: one line for the surname, two for the name, one each for dates, place and note — an empty slot stays empty */
+.tc>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc .sn{grid-row:1;padding-right:16px;font:500 10.5px/14px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.tc .gn{grid-row:2;font:700 15px/19px var(--f-display);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tc .d{grid-row:3;font:400 11.5px/17px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.tc .meta{grid-row:4;font:400 12px/17px var(--f-ui);color:var(--ink-2)}
+.tc .tag{grid-row:5;justify-self:start;align-self:center;display:block;max-width:100%;padding:0 7px;border-radius:5px;font:500 11px/18px var(--f-ui)}
 .tc .mk{position:absolute;top:11px;right:10px;width:9px;height:9px;margin:0}
-.tc .tag{align-self:flex-start;margin-top:5px;padding:2px 7px;font-size:11px}
-a.tc:hover{border-color:var(--stamp)}
 .tc.s-doc{border:1.5px solid var(--stamp)}
 .tc.s-version{border:1.5px dashed var(--stamp)}
 .tc.s-patr{background:var(--paper);border:1px dashed var(--rule-strong);box-shadow:none}
 .tc.s-patr .gn{font-weight:400;font-style:italic;color:var(--ink-2)}
-.tc.s-unknown{background:var(--paper);border:1px dashed var(--rule-strong);box-shadow:none;align-items:center;text-align:center;padding:8px}
-.tc.s-unknown .gn{font:400 16px/1.2 var(--f-display);color:var(--ink-3)}
+.tc.s-unknown{background:var(--paper);border:1px dashed var(--rule-strong);box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.tc.s-unknown .gn{display:block;font:400 20px/1.2 var(--f-display);color:var(--ink-3)}
 .tc.s-unknown .meta{color:var(--ink-3);font-size:11.5px}
-.tc.s-living .meta{color:var(--ink-3)}
-.tc.s-self{background:var(--ink);border-color:var(--ink);color:var(--paper);align-items:center;text-align:center;padding:12px}
-.tc.s-self .sn,.tc.s-self .meta{color:var(--paper);opacity:.72}
+.tc.s-living .meta{grid-row:3/5;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:var(--ink-3)}
+.links path.sp{stroke-width:1.4}
 .tc.on-path{box-shadow:0 0 0 1.5px var(--stamp),var(--shadow)}
 .tc.sel{box-shadow:0 0 0 3px var(--stamp),var(--shadow)}
 .tc.flash{animation:flash 1.4s ease 2}
@@ -241,10 +238,35 @@ a.tc:hover{border-color:var(--stamp)}
 .tv-ctl button:hover{background:var(--stamp-wash);color:var(--stamp)}
 .tv-ctl output{min-width:52px;text-align:center;font:500 12.5px/1 var(--f-mono);color:var(--ink-2);font-variant-numeric:tabular-nums;border-inline:1px solid var(--rule)}
 .tv-ctl .grp+.grp button+button{border-left:1px solid var(--rule)}
-.tv-hint{position:absolute;left:12px;bottom:12px;margin:0;max-width:calc(100% - 330px);padding:6px 10px;border-radius:8px;background:var(--card);border:1px solid var(--rule);font-size:12.5px;color:var(--ink-3);pointer-events:none}
+.tv-hint{position:absolute;left:12px;bottom:12px;margin:0;max-width:calc(100% - 330px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 10px;border-radius:8px;background:var(--card);border:1px solid var(--rule);font-size:12.5px;color:var(--ink-3);pointer-events:none}
 @media (max-width:760px){.tv-hint{display:none}.ruler{display:none}.tv-ctl{gap:4px;right:8px;bottom:8px;max-width:calc(100% - 16px)}.tv-ctl button{padding:0 9px;min-width:36px;height:38px;font-size:13.5px}.tv-ctl output{min-width:44px}}
 
+/* person panel beside the tree: the same record as the person page, in one column; a bottom sheet on a phone */
+.tstage{position:relative}
+.pp{position:absolute;top:10px;right:10px;bottom:10px;width:min(440px,calc(100% - 20px));z-index:8;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--rule-strong);border-radius:12px;box-shadow:0 12px 40px rgba(27,29,42,.2);overflow:hidden}
+.pp-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 6px 6px 18px;border-bottom:1px solid var(--rule);flex:none}
+.pp-bar a{font:500 14px/1.3 var(--f-ui)}
+.pp-x{width:40px;height:40px;border:0;border-radius:8px;background:none;color:var(--ink-2);font:400 24px/1 var(--f-ui);cursor:pointer}
+.pp-x:hover{background:var(--paper);color:var(--ink)}
+.pp-body{overflow-y:auto;overscroll-behavior:contain;padding:18px 18px 24px}
+.pp-body .p-head{margin-top:0;padding-bottom:18px}
+.pp-body .h1{font-size:28px}
+.pp-body .p-cols{grid-template-columns:minmax(0,1fr);grid-template-areas:"rail" "main";gap:24px;margin-top:20px}
+.pp-body .gal{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.pp-body .pnav{display:none}
+.tstage.has-pp .tv-ctl{right:462px}
+.tstage.has-pp .tv-hint{display:none}
+@media (max-width:760px){
+  .pp{position:fixed;left:0;right:0;top:auto;bottom:0;width:auto;max-height:56vh;z-index:28;border-radius:16px 16px 0 0;border-width:1px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .tstage.has-pp .tv-ctl{right:8px}
+}
+
 /* person page */
+.crumbs .back{font-weight:600;color:var(--stamp);text-decoration:none}
+.crumbs .back:hover{text-decoration:underline}
+.desc{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;margin:0;font-size:14px}
+.desc dt{color:var(--ink-3)}
+.desc dd{margin:0;min-width:0}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:14px;color:var(--ink-3)}
 .crumbs a{color:var(--ink-2)}
 .p-head{display:grid;gap:10px;margin-top:14px;padding-bottom:26px;border-bottom:1px solid var(--rule)}
@@ -368,11 +390,22 @@ footer p{margin:0;max-width:90ch}
 <script>
 const M = window.FAMILY.maps;
 const { DELA, WEB, GEO, LINES, STATUS, REL } = M;
-const WHO = 'Андрея и Евгении';
-const COLS = ['Андрей и Евгения','Родители','Бабушки и дедушки','Прадеды','Прапрадеды','Прапрапрадеды','6-е колено','7-е колено','8-е колено','9-е колено','10-е колено'];
+/* generation headings are impersonal: the living rows by age, the rest by years of birth */
+const ROWS = { 1: 'Старшее поколение', 0: 'Среднее поколение', '-1': 'Младшее поколение' };
+const born = n => { const m = String(n.d || '').split('–')[0].match(/\d{4}/); return m ? +m[0] : null; };
+const genYears = {};
+function genLabel(g, long) {
+  if (g <= 1) return ROWS[g] || 'Младшие';
+  if (!(g in genYears)) { const ys = ORDER.filter(n => n.gen === g).map(born).filter(Boolean); genYears[g] = ys.length ? [Math.min(...ys), Math.max(...ys)] : null; }
+  const y = genYears[g];
+  if (!y) return `${g}-е колено`;
+  const one = y[0] === y[1], span = one ? `${y[0]}` : `${y[0]}–${y[1]}`;
+  return long ? `Родились в ${span} ${one ? 'году' : 'годах'}` : `род. ${span}`;
+}
 const SLUG = { anatoly:'solin', lyudmilaE:'ershov', alexeyR:'romanov', elena:'nikolaenkov' };
 const LNAME = { solin:'Солины', ershov:'Ершовы', romanov:'Романовы', nikolaenkov:'Николаенковы' };
 const P = {}; let ORDER = [];
+const KIN = []; /* living relatives beside the pedigree (not ancestors): names only, drawn on the tree, no pages */
 const view = document.getElementById('view');
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -417,23 +450,6 @@ function srcItem(s) {
 }
 
 /* ---------- relations ---------- */
-function relWord(n) {
-  if (n.st === 'self') return '';
-  const rel = REL[n.gen];
-  if (!rel) return `предок в ${n.gen}-м колене`;
-  return rel[n.role === 'f' ? 0 : 1].toLowerCase();
-}
-function relation(n) {
-  if (n.gen === 0) return '';
-  if (n.gen === 1) return relWord(n);
-  return `${relWord(n)} по ${n.side}`;
-}
-function relFull(n) {
-  if (!n.gen) return '';
-  const r = REL[n.gen] ? REL[n.gen][n.role === 'f' ? 0 : 1] : null;
-  if (!r) return `Предок ${WHO} в ${n.gen}-м колене, по ${n.side}`;
-  return n.gen === 1 ? `${r} ${WHO}` : `${r} ${WHO} по ${n.side}`;
-}
 function ofChild(n) {
   const c = P[n.child]; if (!c || c.gen === 0) return '';
   return `${n.role === 'f' ? 'отец' : 'мать'} — ${c.gn}`;
@@ -480,7 +496,7 @@ function vHome() {
     const deepest = people.filter(n => year(n)).sort((a, b) => year(a) - year(b))[0];
     const raw = [...new Set(people.map(n => n.sn).filter(s => s && s !== 'фамилия неизвестна').map(s => s.replace(/\s*\(.*\)/, '').replace(/^урожд\.\s*/, '')))];
     const sns = raw.filter(s => !(/а$/.test(s) && raw.includes(s.slice(0, -1)))).slice(0, 7);
-    const via = `${g.side === 'отцу' ? 'по отцу' : 'по матери'}: ${g.role === 'f' ? 'дедушка' : 'бабушка'} ${full(g)}`;
+    const via = `${full(g)}${g.d ? ` (${g.d})` : ''} и ${g.role === 'f' ? 'его' : 'её'} предки`;
     const gens = Math.max(...people.map(n => n.gen)) - 1;
     return `<a class="line-card" href="#line-${slug}">
       <div class="lc-top"><h3>${LNAME[slug]}</h3><span class="count">${people.length} чел. · ${gens} пок.</span></div>
@@ -492,7 +508,7 @@ function vHome() {
   const FACES = [['flor','flor-1920s.jpg'],['u3','ershova-group.jpg'],['maria','maria-nkps-1927.jpg','93% 45%'],['vstep','vstep-1960.jpg'],['anatoly','anatoly-1954.jpg']];
   const faces = FACES.filter(([id]) => P[id] && P[id].ph).map(([id, file, pos]) => {
     const n = P[id], p = n.ph.find(x => x.src.endsWith('/' + file)) || n.ph[0];
-    return `<a class="face" href="#p-${id}"><span class="frame"><img src="${p.src}" alt="${esc(p.cap)}" loading="lazy"${pos ? ` style="object-position:${pos}"` : ''}></span><b>${esc(full(n))}</b><span>${esc(n.d || '')}${relation(n) ? ' · ' + esc(relation(n)) : ''}</span></a>`;
+    return `<a class="face" href="#p-${id}"><span class="frame"><img src="${p.src}" alt="${esc(p.cap)}" loading="lazy"${pos ? ` style="object-position:${pos}"` : ''}></span><b>${esc(full(n))}</b><span>${esc(n.d || '')}${lineOf(n) ? ' · ' + esc(lineOf(n).name) : ''}</span></a>`;
   }).join('');
   const hp = P.u3 && P.u3.ph ? P.u3.ph[0] : null;
   view.innerHTML = `
@@ -500,7 +516,7 @@ function vHome() {
     <div class="hero-text">
       <p class="eyebrow">Семейный архив</p>
       <h1 class="h1">Родословная Солиных</h1>
-      <p class="lede">Предки ${WHO} по четырём линиям: Солины, Ершовы, Романовы и Николаенковы. У каждого человека своя страница — что о нём известно, откуда это известно, фотографии и ссылки на сканы архивных книг.</p>
+      <p class="lede">Четыре рода одной семьи: Солины, Ершовы, Романовы и Николаенковы. У каждого человека своя страница — что о нём известно, откуда это известно, фотографии и ссылки на сканы архивных книг.</p>
       <p class="summary">В древе <b>${anc.length}</b> предков в <b>${maxGen}</b> поколениях${oldest ? `; самый ранний — ${esc(full(oldest))}, родился около <b>${year(oldest)}</b> года` : ''}. <b>${photos.size}</b> фотографий и документов из семейного архива.</p>
       <div>${searchBox('q-home', 'Найти человека: имя, фамилия, деревня')}<ul class="hits" id="hits-home" hidden></ul></div>
     </div>
@@ -532,7 +548,7 @@ function statusKeys() {
 }
 function bindSearch(inputId, listId, onPick) {
   const inp = document.getElementById(inputId), ul = document.getElementById(listId);
-  const inner = n => `<span class="nm">${esc(full(n))}</span><span class="dt">${esc(n.d || '')}</span><span class="rl">${esc([relation(n), n.pl].filter(Boolean).join(' · '))}</span>`;
+  const inner = n => `<span class="nm">${esc(full(n))}</span><span class="dt">${esc(n.d || '')}</span><span class="rl">${esc([lineOf(n) && lineOf(n).name, n.pl].filter(Boolean).join(' · '))}</span>`;
   const run = () => {
     const q = inp.value.trim();
     if (!q) { ul.hidden = true; ul.innerHTML = ''; return; }
@@ -562,9 +578,9 @@ function vLine(slug) {
     <nav class="crumbs"><a href="#home">Главная</a><span>Линия</span></nav>
     <header class="p-head">
       <h1 class="h1">${LNAME[slug]}</h1>
-      <p class="lede">Линия ${WHO} ${g.side === 'отцу' ? 'по отцу' : 'по матери'}. Начинается с ${g.role === 'f' ? 'дедушки' : 'бабушки'}: ${esc(full(g))}. Здесь ${people.length} человек в ${gens.length} поколениях; места — ${esc(places.join(', '))}.</p>
+      <p class="lede">${esc(full(g))}${g.d ? ` (${esc(g.d)})` : ''} и ${g.role === 'f' ? 'его' : 'её'} предки. Здесь ${people.length} человек в ${gens.length} поколениях; места — ${esc(places.join(', '))}.</p>
     </header>
-    ${gens.map(gn => `<section class="sec gen"><h3>${esc(COLS[gn] || gn + '-е колено')}</h3><div class="pgrid">${people.filter(n => n.gen === gn).map(n => personCard(n)).join('')}</div></section>`).join('')}`;
+    ${gens.map(gn => `<section class="sec gen"><h3>${esc(genLabel(gn, true))}</h3><div class="pgrid">${people.filter(n => n.gen === gn).map(n => personCard(n)).join('')}</div></section>`).join('')}`;
 }
 
 let peopleFilter = 'all', peopleQuery = '';
@@ -572,7 +588,7 @@ function vPeople() {
   view.innerHTML = `
     <header class="p-head" style="margin-top:0">
       <h1 class="h1">Все люди</h1>
-      <p class="lede">Все предки ${WHO}, от родителей до самых ранних, по поколениям. Можно искать по имени, фамилии, деревне или по написанию в старой орфографии.</p>
+      <p class="lede">Все предки семьи по поколениям, от недавних к самым ранним. Можно искать по имени, фамилии, деревне или по написанию в старой орфографии.</p>
     </header>
     <section class="sec" style="margin-top:28px">
       <div class="tools">${searchBox('q-people', 'Имя, фамилия или место', peopleQuery)}
@@ -586,8 +602,8 @@ function vPeople() {
     const list = (peopleQuery ? find(peopleQuery) : ORDER.filter(isPage)).filter(n => peopleFilter === 'all' || n.slug === peopleFilter);
     const byGen = [...new Set(list.map(n => n.gen))].sort((a, b) => a - b);
     document.getElementById('people-count').textContent = list.length ? `Показано: ${list.length}` : 'Никого не нашлось.';
-    document.getElementById('people-rows').innerHTML = byGen.map(gn => `<li class="grp">${esc(COLS[gn] || gn + '-е колено')}</li>` +
-      list.filter(n => n.gen === gn).map(n => `<li><a href="#p-${n.id}">${mk(n.st)}<span class="nm"><span>${esc(n.sn)}</span><b>${esc(n.gn)}</b></span><span class="d">${esc(n.d || '')}</span><span class="rl">${esc([relation(n), lineOf(n) && lineOf(n).name].filter(Boolean).join(' · '))}</span></a></li>`).join('')).join('');
+    document.getElementById('people-rows').innerHTML = byGen.map(gn => `<li class="grp">${esc(genLabel(gn, true))}</li>` +
+      list.filter(n => n.gen === gn).map(n => `<li><a href="#p-${n.id}">${mk(n.st)}<span class="nm"><span>${esc(n.sn)}</span><b>${esc(n.gn)}</b></span><span class="d">${esc(n.d || '')}</span><span class="rl">${esc([lineOf(n) && lineOf(n).name, n.pl].filter(Boolean).join(' · '))}</span></a></li>`).join('')).join('');
   };
   inp.addEventListener('input', () => { peopleQuery = inp.value.trim(); draw(); });
   view.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
@@ -634,7 +650,7 @@ function vAbout() {
   view.innerHTML = `
     <header class="p-head" style="margin-top:0">
       <h1 class="h1">Как читать этот сайт</h1>
-      <p class="lede">Здесь собрано всё, что удалось узнать о предках ${WHO}: из архивов, из семейных документов и со слов родных.</p>
+      <p class="lede">Здесь собрано всё, что удалось узнать о предках семьи: из архивов, из семейных документов и со слов родных.</p>
     </header>
     <div class="about" style="margin-top:30px">
       <section><h2 class="h2">Пометки у имён</h2>${statusKeys()}</section>
@@ -664,6 +680,18 @@ function vPerson(id) {
   if (!n) return vMissing();
   if (!isPage(n)) { location.replace('#tree'); return; }
   lastPerson = id;
+  view.innerHTML = personHtml(n, false);
+  document.title = `${full(n)} — Родословная Солиных`;
+  bindPerson(view);
+  /* «Назад» returns to wherever the reader came from; opened by a direct link, it leads to the tree */
+  document.getElementById('p-back').addEventListener('click', e => { if (route.n > 1) { e.preventDefault(); history.back(); } });
+}
+function bindPerson(root) {
+  const sa = root.querySelector('.showall');
+  if (sa) sa.addEventListener('click', () => { root.querySelectorAll('[data-more]').forEach(f => { f.hidden = false; }); sa.remove(); });
+}
+function personHtml(n, inPanel) {
+  const href = k => (inPanel ? '#tree/' : '#p-') + k, H = inPanel ? 'h2' : 'h1';
   const male = n.role === 'f';
   const ln = lineOf(n);
   const rows = [];
@@ -675,11 +703,14 @@ function vPerson(id) {
     const x = P[k];
     if (!x || x.st === 'unknown') return `<div class="x"><small>${who}</small><b>неизвестен${who === 'Мать' ? 'а' : ''}</b></div>`;
     if (!isPage(x)) return `<div class="x"><small>${who}</small><b>${esc(full(x))}</b></div>`;
-    return `<a href="#p-${x.id}"><small>${who}</small><b>${esc(full(x))}</b>${x.d ? `<span class="ref">${esc(x.d)}</span>` : ''}</a>`;
+    return `<a href="${href(x.id)}"><small>${who}</small><b>${esc(full(x))}</b>${x.d ? `<span class="ref">${esc(x.d)}</span>` : ''}</a>`;
   };
   const c = P[n.child];
   const childWho = c ? (c.role === 'f' || c.gen === 0 ? 'Сын' : 'Дочь') : '';
-  const path = []; let x = n; while (x) { path.push(x); x = P[x.child]; }
+  /* descendants by generation, down to the living: every relative finds their own branch here */
+  const levels = []; let cur = [n.id];
+  for (;;) { const next = ORDER.concat(KIN).filter(k => cur.includes(k.f) || cur.includes(k.m)); if (!next.length) break; levels.push(next); cur = next.map(k => k.id); }
+  const DESC = ['Дети', 'Внуки', 'Правнуки', 'Праправнуки'];
   const photos = (n.ph || []).map(p => ({ src: p.src, cap: p.cap, who: [n] }));
   LB_SETS.person = photos;
   const main = [];
@@ -695,26 +726,23 @@ function vPerson(id) {
   else if (n.caveat) main.push(`<p class="caveat prose">${esc(n.caveat)}</p>`);
   if (n.next) main.push(`<section class="blk"><h2>Что ещё можно найти</h2><p class="prose">${esc(n.next)}</p></section>`);
   const up = [n.f, n.m].map(k => P[k]).filter(isPage);
-  view.innerHTML = `
-    <nav class="crumbs">${ln ? `<a href="#line-${ln.slug}">Линия: ${ln.name}</a>` : '<a href="#tree">Древо</a>'}<span>${esc(relFull(n))}</span></nav>
+  return `
+    ${inPanel ? '' : `<nav class="crumbs"><a class="back" id="p-back" href="#tree/${n.id}">← Назад</a>${ln ? `<a href="#line-${ln.slug}">Линия: ${ln.name}</a>` : ''}</nav>`}
     <header class="p-head">
       <span class="sn">${esc(n.sn)}</span>
-      <h1 class="h1">${esc(n.gn)}</h1>
+      <${H} class="h1">${esc(n.gn)}</${H}>
       ${n.d || n.pl ? `<p class="dates">${esc([n.d, n.pl].filter(Boolean).join(' · '))}</p>` : ''}
-      <div class="badges"><span class="chip ${n.st}" title="${esc(STATUS[n.st].hint || '')}">${mk(n.st)}${esc(STATUS[n.st].label)}</span>${n.tag ? `<span class="tag ${esc(n.tag.k)}">${esc(n.tag.t)}</span>` : ''}<a class="chip tree-link" href="#tree" data-focus="${n.id}">Показать на древе</a></div>
+      <div class="badges"><span class="chip ${n.st}" title="${esc(STATUS[n.st].hint || '')}">${mk(n.st)}${esc(STATUS[n.st].label)}</span>${n.tag ? `<span class="tag ${esc(n.tag.k)}">${esc(n.tag.t)}</span>` : ''}${inPanel ? '' : `<a class="chip tree-link" href="#tree/${n.id}">Показать на древе</a>`}</div>
     </header>
     <div class="p-cols">
       <div class="p-main">${main.join('') || '<p class="caveat">Пока известно только имя.</p>'}</div>
       <aside class="p-rail">
         ${rows.length || n.written ? `<div class="panel">${rows.length ? `<dl>${rows.map(r => `<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl>` : ''}${n.written ? `<p class="written">Как записано в документе<q>${esc(n.written)}</q></p>` : ''}</div>` : ''}
         <section class="blk"><h2>Семья</h2><div class="fam">${famLink('Отец', n.f)}${famLink('Мать', n.m)}${c ? famLink(childWho, c.id) : ''}</div></section>
-        <section class="blk"><h2>Родство с ${esc(WHO.replace('Андрея', 'Андреем').replace('Евгении', 'Евгенией'))}</h2><ol class="path">${path.map((p, i) => `<li class="${i === 0 ? 'me' : ''}">${i && isPage(p) ? `<a href="#p-${p.id}">${esc(full(p))}</a>` : esc(p.id === 'andrey' ? 'Андрей и Евгения' : full(p))}</li>`).join('')}</ol></section>
+        ${levels.length ? `<section class="blk"><h2>Потомки</h2><dl class="desc">${levels.map((l, i) => `<dt>${DESC[i] || (i + 1) + '-е колено'}</dt><dd>${l.map(k => isPage(k) ? `<a href="${href(k.id)}">${esc(full(k))}</a>` : esc(full(k))).join(', ')}</dd>`).join('')}</dl></section>` : ''}
       </aside>
     </div>
     ${up.length ? `<nav class="pnav" aria-label="Дальше вверх по древу">${up.map(p => personCard(p, false)).join('')}</nav>` : ''}`;
-  document.title = `${full(n)} — Родословная Солиных`;
-  const sa = document.getElementById('show-all');
-  if (sa) sa.addEventListener('click', () => { view.querySelectorAll('[data-more]').forEach(f => { f.hidden = false; }); sa.remove(); });
 }
 
 function vMissing() {
@@ -727,32 +755,36 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function vTree() {
   view.innerHTML = `
     <header class="tree-head">
-      <div><h1 class="h1">Древо</h1><p class="lede">Внизу — Андрей и Евгения, выше каждое следующее поколение. Нажмите на человека, чтобы открыть его страницу.</p></div>
-      <div class="th-tools">${searchBox('q-tree', 'Найти на древе')}<ul class="hits" id="hits-tree" hidden></ul></div>
+      <h1 class="sr">Древо</h1>
       <ul class="legend">${['doc','version','family','patr'].map(st => `<li>${mk(st)}${esc(STATUS[st].label)}</li>`).join('')}</ul>
+      <div class="th-tools">${searchBox('q-tree', 'Найти на древе')}<ul class="hits" id="hits-tree" hidden></ul></div>
     </header>
+    <div class="tstage" id="tstage">
     <div class="tv" id="tv" tabindex="0" aria-label="Древо. Перетаскивайте, чтобы двигать; колесо мыши, два пальца или кнопки — масштаб">
       <div class="world" id="world"><svg class="links" id="links" aria-hidden="true"></svg></div>
       <div class="ruler" id="ruler" aria-hidden="true"></div>
-      <p class="tv-hint">Перетаскивайте древо мышью · колесо мыши — крупнее или мельче</p>
+      <p class="tv-hint">Перетаскивайте древо мышью · колесо мыши — масштаб · нажмите на человека, чтобы прочитать о нём</p>
       <div class="tv-ctl">
         <div class="grp"><button class="ic" id="z-out" type="button" aria-label="Мельче">−</button><output id="z-val" aria-live="polite">100%</output><button class="ic" id="z-in" type="button" aria-label="Крупнее">+</button></div>
         <div class="grp"><button id="z-fit" type="button">Всё древо</button><button id="z-root" type="button">К началу</button></div>
       </div>
+    </div>
+    <aside class="pp" id="pp" hidden aria-label="О человеке"></aside>
     </div>`;
   const world = document.getElementById('world');
   treeEls = {};
-  ORDER.forEach(n => {
-    const el = document.createElement(isPage(n) ? 'a' : 'div');
-    if (isPage(n)) { el.href = '#p-' + n.id; el.draggable = false; }
-    el.className = `tc s-${n.st}`;
-    if (n.st === 'unknown') el.innerHTML = `<span class="gn">?</span><span class="meta">${n.role === 'm' ? 'мать неизвестна' : 'отец неизвестен'}</span>`;
-    else el.innerHTML = `<span class="sn">${esc(n.sn)}</span><span class="gn">${esc(n.gn)}</span>${n.d ? `<span class="d">${esc(n.d)}</span>` : ''}${n.pl || n.meta ? `<span class="meta">${esc(n.pl || n.meta)}</span>` : ''}${n.tag ? `<span class="tag ${n.tag.k}">${esc(n.tag.t)}</span>` : ''}${isPage(n) ? `<i class="mk ${n.st}" aria-hidden="true"></i>` : ''}`;
+  ORDER.concat(KIN).forEach(n => {
+    const el = document.createElement(isPage(n) ? 'a' : 'div'), st = n.st === 'self' ? 'living' : n.st;
+    if (isPage(n)) { el.href = '#tree/' + n.id; el.draggable = false; }
+    el.className = `tc s-${st}${n.kin ? ' kin' : ''}`;
+    if (st === 'unknown') el.innerHTML = `<span class="gn">?</span><span class="meta">${n.role === 'm' ? 'мать неизвестна' : 'отец неизвестен'}</span>`;
+    else if (st === 'living') el.innerHTML = `<span class="sn">${esc(n.sn || '')}</span><span class="gn">${esc(n.gn)}</span>${n.kin && n.meta ? `<span class="meta">${esc(n.meta)}</span>` : ''}`;
+    else { const pl = n.pl || n.meta; el.innerHTML = `<span class="sn">${esc(n.sn)}</span><span class="gn">${esc(n.gn)}</span>${n.d ? `<span class="d">${esc(n.d)}</span>` : ''}${pl ? `<span class="meta" title="${esc(pl)}">${esc(pl)}</span>` : ''}${n.tag ? `<span class="tag ${n.tag.k}" title="${esc(n.tag.t)}">${esc(n.tag.t)}</span>` : ''}<i class="mk ${n.st}" aria-hidden="true"></i>`; }
     if (isPage(n)) { el.addEventListener('mouseenter', () => treeHighlight(n.id)); el.addEventListener('focus', () => { treeHighlight(n.id); }); }
     treeEls[n.id] = el; world.appendChild(el);
   });
   world.addEventListener('mouseleave', () => treeHighlight(lastPerson));
-  bindSearch('q-tree', 'hits-tree', id => { treeFocus(id, Math.max(T.s, 0.95)); flash(id); });
+  bindSearch('q-tree', 'hits-tree', id => { treeFocus(id, Math.max(T.s, 0.95)); flash(id); location.hash = '#tree/' + id; });
   sizeTv(); treeLayout();
   if (focusOnTree && P[focusOnTree]) { treeFocus(focusOnTree, 0.95, false); flash(focusOnTree); }
   else if (treeState) { T = { ...treeState }; tApply(false); }
@@ -774,10 +806,11 @@ function vElbow(x1, y1, x2, y2, ym) {
 function treeLayout() {
   const world = document.getElementById('world'), svg = document.getElementById('links');
   if (!world) return;
-  const W = 166, GX = 14, GY = 64, PAD = 60;
-  const maxGen = Math.max(...ORDER.map(n => n.gen));
-  ORDER.forEach(n => { treeEls[n.id].style.width = W + 'px'; });
-  ORDER.forEach(n => { n.h = treeEls[n.id].offsetHeight; });
+  const W = 188, GX = 14, GY = 64, XG = 30, PAD = 60;
+  const ALL = ORDER.concat(KIN);
+  const maxGen = Math.max(...ORDER.map(n => n.gen)), minGen = Math.min(0, ...KIN.map(n => n.gen));
+  ALL.forEach(n => { treeEls[n.id].style.width = W + 'px'; });
+  ALL.forEach(n => { n.h = treeEls[n.id].offsetHeight; });
   /* tidy layout: each pair of parent subtrees is pushed apart only as far as their rows need */
   (function lay(id) {
     const n = P[id], ps = [n.f, n.m].filter(Boolean);
@@ -800,26 +833,73 @@ function treeLayout() {
   const cx = P.andrey.rx + W / 2, span = g2.length * W + (g2.length - 1) * gap2;
   g2.forEach((n, i) => { n.rx = cx - span / 2 + i * (W + gap2); });
   for (let g = TRUNK - 1; g >= 0; g--) ORDER.filter(n => n.gen === g).forEach(n => { const ps = [n.f, n.m].filter(Boolean); if (ps.length) n.rx = ps.map(k => P[k].rx).reduce((a, b) => a + b) / ps.length; });
-  const minX = Math.min(...ORDER.map(n => n.rx));
+  /* side branches: living relatives hang beside the trunk — the father's side on the left, Andrey's siblings and the mother's side on the right;
+     each family is a small top-down tree pushed as close to the trunk as its rows allow */
+  const SG = 26, spouseOf = {}, kids = {};
+  KIN.forEach(n => { if (n.sp) spouseOf[n.sp] = n.id; });
+  KIN.forEach(n => [...new Set([n.f, n.m].filter(k => k && P[k].kin).map(k => spouseOf[k] || k))].forEach(k => (kids[k] = kids[k] || []).push(n.id)));
+  const block = id => {
+    const subs = (kids[id] || []).map(block), uw = P[id].sp ? 2 * W + SG : W;
+    const kw = subs.reduce((a, b) => a + b.w, 0) + GX * Math.max(0, subs.length - 1), w = Math.max(uw, kw);
+    const ext = [[(w - uw) / 2, (w + uw) / 2]]; let x = (w - kw) / 2;
+    subs.forEach(s => { s.dx = x; s.ext.forEach((e, d) => { const o = ext[d + 1]; ext[d + 1] = o ? [Math.min(o[0], e[0] + x), Math.max(o[1], e[1] + x)] : [e[0] + x, e[1] + x]; }); x += s.w + GX; });
+    return { id, w, uw, subs, ext };
+  };
+  const put = (b, x0, left) => {
+    const n = P[b.id], ux = x0 + (b.w - b.uw) / 2;
+    if (n.sp) { n.rx = left ? ux + W + SG : ux; P[n.sp].rx = left ? ux : ux + W + SG; } else n.rx = ux;
+    b.subs.forEach(s => put(s, x0 + s.dx, left));
+  };
+  const lo = {}, hi = {};
+  const grow = (g, l, r) => { lo[g] = Math.min(lo[g] == null ? Infinity : lo[g], l); hi[g] = Math.max(hi[g] == null ? -Infinity : hi[g], r); };
+  ORDER.forEach(n => grow(n.gen, n.rx, n.rx + W));
+  for (let g = -1; g >= minGen; g--) grow(g, P.andrey.rx, P.andrey.rx + W); /* nothing of a side branch sits right under Andrey */
+  KIN.filter(n => !spouseOf[n.id] && ![n.f, n.m].some(k => k && P[k].kin)).forEach(n => {
+    const par = P[n.f || n.m], left = par.gen > 1 ? par.side === 'отцу' : par.gen === 1 ? false : par.id === 'vladimir', b = block(n.id), g = n.gen;
+    let x0 = left ? Infinity : -Infinity;
+    b.ext.forEach((e, d) => { if (lo[g - d] != null) x0 = left ? Math.min(x0, lo[g - d] - GX - e[1]) : Math.max(x0, hi[g - d] + GX - e[0]); });
+    put(b, x0, left);
+    b.ext.forEach((e, d) => grow(g - d, x0 + e[0], x0 + e[1]));
+  });
+  const minX = Math.min(...ALL.map(n => n.rx));
   const rowH = {}, rowTop = {};
-  ORDER.forEach(n => { rowH[n.gen] = Math.max(rowH[n.gen] || 0, n.h); });
+  ALL.forEach(n => { rowH[n.gen] = Math.max(rowH[n.gen] || 0, n.h); });
   let y = PAD;
-  for (let g = maxGen; g >= 0; g--) { rowTop[g] = y; y += rowH[g] + GY; }
+  for (let g = maxGen; g >= minGen; g--) { rowTop[g] = y; y += rowH[g] + GY + (g === TRUNK + 1 ? XG : 0); }
   const Wh = y - GY + PAD;
   let Ww = 0;
-  ORDER.forEach(n => { n.x = Math.round(n.rx - minX + PAD + 120); n.y = rowTop[n.gen]; Ww = Math.max(Ww, n.x + W + PAD); treeEls[n.id].style.transform = `translate(${n.x}px, ${n.y}px)`; });
+  ALL.forEach(n => { n.x = Math.round(n.rx - minX + PAD + 120); n.y = rowTop[n.gen]; Ww = Math.max(Ww, n.x + W + PAD); treeEls[n.id].style.transform = `translate(${n.x}px, ${n.y}px)`; });
   world.style.width = Ww + 'px'; world.style.height = Wh + 'px';
   svg.setAttribute('width', Ww); svg.setAttribute('height', Wh);
+  /* the grandparents stand closer together than their parents above them, so their links run through one channel as horizontal buses;
+     of all the orders of the buses take the one where links cross least (usually not at all) */
+  const mid = n => n.x + W / 2, lev = {};
+  const nets = g2.map(n => { const ps = [n.f, n.m].filter(Boolean).map(k => mid(P[k])); return { id: n.id, cx: mid(n), ps, a: Math.min(mid(n), ...ps), b: Math.max(mid(n), ...ps) }; }).filter(t => t.ps.length);
+  const perms = a => a.length < 2 ? [a] : a.flatMap((v, i) => perms(a.filter((_, j) => j !== i)).map(r => [v, ...r]));
+  let bestC = Infinity;
+  perms(nets.map((_, i) => i)).forEach(pm => { /* pm[i] — the level of bus i, 0 is the nearest to the parents' row */
+    let c = 0;
+    nets.forEach((h, i) => nets.forEach((v, j) => {
+      if (i === j) return;
+      v.ps.forEach(x => { if (pm[i] < pm[j] && x > h.a + 1 && x < h.b - 1) c++; });
+      if (pm[i] > pm[j] && v.cx > h.a + 1 && v.cx < h.b - 1) c++;
+    }));
+    if (c < bestC) { bestC = c; nets.forEach((t, i) => { lev[t.id] = pm[i]; }); }
+  });
   let paths = '';
-  ORDER.forEach(n => [n.f, n.m].filter(Boolean).forEach(pk => {
-    const p = P[pk], i = n.gen === TRUNK ? g2.indexOf(n) : -1;
-    const ym = rowTop[p.gen] + rowH[p.gen] + (i >= 0 ? GY * (i + 1) / (g2.length + 1) : GY / 2);
+  ALL.forEach(n => [n.f, n.m].filter(Boolean).forEach(pk => {
+    const p = P[pk], bus = !n.kin && n.gen === TRUNK && n.id in lev;
+    const ym = rowTop[p.gen] + rowH[p.gen] + (bus ? (GY + XG) * (lev[n.id] + 1) / (nets.length + 1) : GY / 2);
     paths += `<path data-c="${n.id}" data-p="${pk}" class="${p.st === 'unknown' ? 'unk' : ''}" d="${vElbow(n.x + W / 2, n.y, p.x + W / 2, p.y + p.h, ym)}"/>`;
   }));
+  KIN.filter(n => n.sp).forEach(n => {
+    const s = P[n.sp], a = n.x < s.x ? n : s, b = a === n ? s : n, ym = Math.round(n.y + Math.min(n.h, s.h) / 2);
+    paths += `<path class="sp" d="M${a.x + W} ${ym}H${b.x}"/>`;
+  });
   svg.innerHTML = paths;
-  const trunk = ORDER.filter(n => n.gen <= TRUNK);
-  TL = { W, Ww, Wh, rowTop, rowH, maxGen, trunk: { x0: Math.min(...trunk.map(n => n.x)), x1: Math.max(...trunk.map(n => n.x + W)), y0: rowTop[TRUNK] } };
-  document.getElementById('ruler').innerHTML = Object.keys(rowTop).map(g => `<span data-g="${g}">${esc(COLS[g] || g + '-е колено')}</span>`).join('');
+  const trunk = ALL.filter(n => n.gen <= TRUNK);
+  TL = { W, Ww, Wh, rowTop, rowH, maxGen, cross: bestC, trunk: { x0: Math.min(...trunk.map(n => n.x)), x1: Math.max(...trunk.map(n => n.x + W)), y0: rowTop[TRUNK], y1: Math.max(...trunk.map(n => n.y + n.h)) } };
+  document.getElementById('ruler').innerHTML = Object.keys(rowTop).map(g => `<span data-g="${g}">${esc(genLabel(+g))}</span>`).join('');
   treeHighlight(lastPerson);
 }
 const clampS = s => Math.min(2, Math.max(minScale(), s));
@@ -844,9 +924,10 @@ function zoomAt(cx, cy, f, anim) {
   T.x = cx - (cx - T.x) * k; T.y = cy - (cy - T.y) * k; T.s = s; tApply(anim);
 }
 function treeStart(anim) {
-  const tv = document.getElementById('tv'), r = P.andrey, vw = tv.clientWidth, vh = tv.clientHeight, tr = TL.trunk;
-  const s = clampS(Math.max(vw < 700 ? 0.62 : 0.5, Math.min(0.95, (vw - 60) / (tr.x1 - tr.x0), (vh - 120) / (r.y + r.h - tr.y0 + 140))));
-  T = { s, x: vw / 2 - ((tr.x0 + tr.x1) / 2) * s, y: vh - 74 - (r.y + r.h) * s };
+  const tv = document.getElementById('tv'), vw = tv.clientWidth, vh = tv.clientHeight, tr = TL.trunk;
+  const s = clampS(Math.max(vw < 700 ? 0.62 : 0.5, Math.min(0.95, (vw - 60) / (tr.x1 - tr.x0), (vh - 120) / (tr.y1 - tr.y0 + 140))));
+  const mid = (tr.x1 - tr.x0) * s <= vw - 40 ? (tr.x0 + tr.x1) / 2 : P.andrey.x + TL.W / 2; /* a trunk too wide for the screen opens centred on Andrey */
+  T = { s, x: vw / 2 - mid * s, y: vh - 74 - tr.y1 * s };
   tApply(anim);
 }
 function treeFit(anim) {
@@ -860,6 +941,28 @@ function treeFocus(id, s, anim = true) {
   s = clampS(s || 0.95);
   T = { s, x: tv.clientWidth / 2 - (n.x + TL.W / 2) * s, y: tv.clientHeight / 2 - (n.y + n.h / 2) * s };
   tApply(anim); if (isPage(n)) { lastPerson = id; treeHighlight(id); }
+}
+/* the person panel: opened from a card (#tree/<id>), closed back to #tree */
+function panelShow(id) {
+  const pp = document.getElementById('pp'); if (!pp) return;
+  const n = id && P[id], stage = pp.parentNode;
+  if (!n || !isPage(n)) { pp.hidden = true; pp.innerHTML = ''; stage.classList.remove('has-pp'); return; }
+  pp.innerHTML = `<div class="pp-bar"><a href="#p-${n.id}">Открыть отдельной страницей →</a><button class="pp-x" id="pp-x" type="button" aria-label="Закрыть">×</button></div><div class="pp-body">${personHtml(n, true)}</div>`;
+  pp.hidden = false; stage.classList.add('has-pp');
+  bindPerson(pp);
+  document.getElementById('pp-x').addEventListener('click', () => { location.hash = '#tree'; });
+  document.title = `${full(n)} — Родословная Солиных`;
+  lastPerson = id; treeHighlight(id); treeReveal(id);
+}
+/* keep the chosen card in the part of the canvas the panel does not cover */
+function treeReveal(id) {
+  const tv = document.getElementById('tv'), pp = document.getElementById('pp'), n = P[id]; if (!tv || !T || !n || n.x == null) return;
+  const b = tv.getBoundingClientRect(); let fw = tv.clientWidth, fh = tv.clientHeight;
+  if (pp && !pp.hidden) { const r = pp.getBoundingClientRect(); if (r.width < b.width * 0.8) fw = Math.max(140, r.left - b.left - 12); else fh = Math.max(140, r.top - b.top - 12); }
+  const s = T.s < 0.45 ? 0.8 : T.s, m = 14;
+  const x0 = T.x + n.x * T.s, y0 = T.y + n.y * T.s, x1 = x0 + TL.W * T.s, y1 = y0 + n.h * T.s;
+  if (s === T.s && x0 >= m && y0 >= m && x1 <= fw - m && y1 <= fh - m) return;
+  T = { s, x: fw / 2 - (n.x + TL.W / 2) * s, y: fh / 2 - (n.y + n.h / 2) * s }; tApply(true);
 }
 function flash(id) { const el = treeEls && treeEls[id]; if (!el || reduced) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 function bindPanZoom() {
@@ -939,6 +1042,13 @@ function treeHighlight(id) {
   }
 }
 
+/* Esc closes the panel, and leaves a person page the way «Назад» does (registered before the lightbox handler, so Esc closes an open photo first) */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !lb.hidden) return;
+  if (route.cur === 'tree' && location.hash.startsWith('#tree/')) location.hash = '#tree';
+  else if (route.cur === 'person') { if (route.n > 1) history.back(); else location.hash = '#tree/' + lastPerson; }
+});
+
 /* ---------- lightbox ---------- */
 const lb = document.getElementById('lb'), lbImg = document.getElementById('lb-img'), lbCap = document.getElementById('lb-cap'), lbCount = document.getElementById('lb-count');
 let lbSet = [], lbI = 0, lbFocus = null;
@@ -976,7 +1086,12 @@ function route() {
   let cur = 'home';
   document.title = 'Семейный архив Солиных';
   if (!h || h === 'home') vHome();
-  else if (h === 'tree') { cur = 'tree'; view.classList.add('full'); vTree(); }
+  else if (h === 'tree' || h.startsWith('tree/')) {
+    cur = 'tree'; const pid = h.slice(5), fresh = route.cur !== 'tree' || !document.getElementById('tv');
+    if (fresh) { view.classList.add('full'); if (P[pid]) focusOnTree = pid; vTree(); }
+    panelShow(pid);
+    if (!fresh) { route.n++; return; }
+  }
   else if (h === 'people') { cur = 'people'; vPeople(); }
   else if (h === 'photos') { cur = 'photos'; vPhotos(); }
   else if (h === 'places') { cur = 'places'; vPlaces(); }
@@ -984,7 +1099,7 @@ function route() {
   else if (h.startsWith('line-')) { cur = 'line'; vLine(h.slice(5)); }
   else if (h.startsWith('p-')) { cur = 'person'; vPerson(h.slice(2)); }
   else vMissing();
-  route.cur = cur;
+  route.cur = cur; route.n = (route.n || 0) + 1;
   view.classList.toggle('full', cur === 'tree');
   document.querySelectorAll('.nav a').forEach(a => { if (a.dataset.v === cur) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   window.scrollTo(0, 0);
@@ -1004,6 +1119,9 @@ let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() 
     if (n.f) walk(n.f, gen + 1, 'f', id, side, slug);
     if (n.m) walk(n.m, gen + 1, 'm', id, side, slug);
   })('andrey', 0, null, null, null, null);
+  (window.FAMILY.kin || []).forEach(r => { if (P[r.id]) return; r.kin = true; r.st = 'living'; P[r.id] = r; KIN.push(r); });
+  const kgen = n => n.gen != null ? n.gen : (n.gen = n.f || n.m ? kgen(P[n.f || n.m]) - 1 : kgen(KIN.find(o => o.sp === n.id)));
+  KIN.forEach(kgen);
   const upd = document.getElementById('upd');
   if (upd && window.FAMILY.updated) upd.textContent = new Date(window.FAMILY.updated + 'T12:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*г\.$/, '');
   addEventListener('hashchange', route);
