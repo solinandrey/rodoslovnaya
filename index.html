@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Old+Standard+TT:ital@0;1&family=Sofia+Sans+Condensed:wght@600;700&display=swap">
 <style>
 /* Look: a quiet archive ledger — white paper, dark ink, hairline rules, a condensed face for names and headings, typewriter labels and one stamp-red.
-   Red means "chosen" (the selected card, the highlighted line of descent, hover on links and buttons); how well a person is documented is shown by the colour of their frame (green — a document, blue — a version, grey — family memory);
+   Red means "chosen" (the selected card, the highlighted line of descent, hover on links and buttons); how sure we are about a person is one scale shown by the frame alone — heavy solid, thin solid, dashed, dotted;
    highlighter yellow means a researcher's note (tags, unproven leads). Capitals only on the small surname line; corners are gently rounded; no tinted panels.
    Layout: sticky bar on top; pages are ruled sections; a person reads like a case file — name and dates, the record in a wide column, the reference rail beside it. */
 :root{
@@ -25,10 +25,9 @@
   --rule:#D9DADB;
   --line:#B4B6B9;
   --mid:#8B8D91;
-  --ok:#1F8A4C;
-  --ok-wash:#E2F2E8;
-  --ver:#2C6DB8;
-  --ver-wash:#E3EDF8;
+  --sure-2:#5C5E62;
+  --sure-3:#86888C;
+  --sure-4:#A9ABAE;
   --rule-strong:#1D1E21;
   --stamp:#D92D1A;
   --stamp-wash:#FCE8E4;
@@ -50,7 +49,7 @@
 /* The site is light for everyone: it does not follow the system's dark mode. The dark set below applies only when a host sets data-theme="dark" (the claude.ai artifact copy). */
 :root[data-theme="dark"]{
   --paper:#101010; --card:#191919; --ink:#F2F2F2; --ink-2:#B9BABC; --ink-3:#8D8F92;
-  --rule:#333435; --line:#55575A; --mid:#8E9093; --ok:#4CC47F; --ok-wash:#173324; --ver:#6FA8E8; --ver-wash:#172A40; --rule-strong:#F2F2F2; --stamp:#FF5B46; --stamp-wash:#3A1712;
+  --rule:#333435; --line:#55575A; --mid:#8E9093; --sure-2:#B4B5B8; --sure-3:#8C8E91; --sure-4:#6A6C6F; --rule-strong:#F2F2F2; --stamp:#FF5B46; --stamp-wash:#3A1712;
   --warn:#FF5B46; --warn-wash:#191919; --photo-ground:#262626; --grid:rgba(255,255,255,.06); --scrim:rgba(0,0,0,.94);
   color-scheme:dark;
 }
@@ -120,17 +119,17 @@ h1,h2,h3{margin:0;text-wrap:balance}
 @media (max-width:700px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats li:nth-child(3){border-left:0;padding-left:0}.stats li:nth-child(n+3){border-top:1px solid var(--line)}}
 /* the tree in miniature: one square per person, one row per generation, the oldest on top */
 .gens{display:grid;gap:5px;margin:0;padding:0;list-style:none}
-.gens li{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:12px}
+.gens li{display:grid;grid-template-columns:215px minmax(0,1fr);align-items:center;gap:12px}
 .gens .gl{font:500 11px/1.2 var(--f-mono);color:var(--ink-2)}
 .gens .gr{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
 .sq{display:block;width:22px;height:22px;border:1.5px solid var(--line);background:var(--card);border-radius:3px}
 a.sq:hover{outline:2px solid var(--stamp);outline-offset:1px}
-.sq.s-doc{background:var(--ok);border-color:var(--ok)}
-.sq.s-version{background:var(--ver);border-color:var(--ver)}
-.sq.s-family{background:#C3C5C8;border-color:#C3C5C8}
-.sq.s-patr{border:1.5px dashed var(--mid)}
+.sq.s-doc{background:var(--ink);border-color:var(--ink)}
+.sq.s-version{background:var(--sure-3);border-color:var(--sure-3)}
+.sq.s-family{background:var(--rule);border-color:var(--sure-4)}
+.sq.s-patr{border:1.5px dotted var(--sure-3);background:none}
 .sq.s-unknown{border:1.5px dotted var(--rule);background:none}
-.sq.s-living{border-color:var(--ink)}
+.sq.s-living{border-color:var(--sure-2);background:radial-gradient(circle,var(--sure-2) 0 3px,var(--card) 3.6px)}
 .legend .sq{display:inline-block;width:14px;height:14px;flex:none}
 @media (max-width:700px){.gens li{grid-template-columns:minmax(0,1fr);gap:3px;margin-top:4px}.gens .gl{text-align:center}.sq{width:16px;height:16px}.gens .gr{gap:3px}}
 
@@ -183,19 +182,19 @@ a.sq:hover{outline:2px solid var(--stamp);outline-offset:1px}
 .keys li p{margin:0;grid-column:2;font-size:14px;color:var(--ink-2)}
 .keys li strong{font:700 20px/1.15 var(--f-name)}
 
-/* status is the colour of the frame: green for a found document, blue for a version from the archives, grey for family memory, dashed for a name known only from a patronymic. The legend swatch (.mk) is a small frame drawn the same way. */
-.mk{display:inline-block;width:16px;height:12px;flex:none;margin-top:5px;border:1.5px solid var(--line);border-radius:3px;background:var(--card)}
-.mk.doc{border-color:var(--ok);background:var(--ok-wash)}
-.mk.version{border-color:var(--ver);background:var(--ver-wash)}
-.mk.family{border-color:var(--mid)}
-.mk.patr{border:1.5px dashed var(--mid)}
+/* certainty is one scale, not four colours: a found document — a heavy solid dark frame; a version from the archives — a thinner, greyer solid frame; family memory — a dashed frame; a name known only from a patronymic — a faint dotted one. The legend swatch (.mk) is a small frame drawn the same way, listed from the surest to the least sure. */
+.mk{display:inline-block;width:24px;height:16px;flex:none;margin-top:3px;border:1.5px solid var(--line);border-radius:4px;background:var(--card)}
+.mk.doc{border:2.5px solid var(--ink)}
+.mk.version{border:1.5px solid var(--sure-2)}
+.mk.family{border:1.5px dashed var(--sure-3)}
+.mk.patr{border:1.5px dotted var(--sure-4);background:none}
 /* the status on a person page: a label framed the same way */
 .chip{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 4px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 16px/1.1 var(--f-name);border-radius:6px}
 .chip .mk{display:none}
-.chip.doc{border:1.5px solid var(--ok);background:var(--ok-wash)}
-.chip.version{border:1.5px solid var(--ver);background:var(--ver-wash)}
-.chip.family{border:1.5px solid var(--mid)}
-.chip.patr{color:var(--ink-2);border:1.5px dashed var(--mid)}
+.chip.doc{border:2.5px solid var(--ink)}
+.chip.version{border:1.5px solid var(--sure-2)}
+.chip.family{border:1.5px dashed var(--sure-3)}
+.chip.patr{color:var(--ink-2);border:1.5px dotted var(--sure-4)}
 .chip.tree-link{text-decoration:none;background:var(--ink);color:var(--card)}
 .chip.tree-link:hover{background:var(--stamp);border-color:var(--stamp);color:#fff}
 /* a researcher's note is a stroke of highlighter */
@@ -215,10 +214,10 @@ a.pc:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--stamp);border-color
 .pc .of{font-size:12.5px;color:var(--ink-3);margin-top:4px}
 .pc .mk{display:none}
 .pc .cam{position:absolute;right:11px;bottom:11px;width:15px;height:15px;stroke:var(--ink-2);fill:none;stroke-width:1.8}
-.pc.s-doc{border:2px solid var(--ok)}
-.pc.s-version{border:2px solid var(--ver)}
-.pc.s-family{border:1.5px solid var(--mid)}
-.pc.s-patr{background:transparent;border:1.5px dashed var(--mid)}
+.pc.s-doc{border:2.5px solid var(--ink)}
+.pc.s-version{border:1.5px solid var(--sure-2)}
+.pc.s-family{border:1.5px dashed var(--sure-3)}
+.pc.s-patr{background:transparent;border:1.5px dotted var(--sure-4)}
 .pc.s-patr .gn{font-weight:600;color:var(--ink-2)}
 .pc.s-static{background:transparent;border:1px dashed var(--rule)}
 
@@ -255,6 +254,7 @@ a.pc:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--stamp);border-color
 @media (max-width:760px){.tree-head{gap:8px}.th-tools{flex:1 1 100%;order:-1}.tree-head .legend{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px 14px}.tree-head .legend li{white-space:nowrap;font-size:11px;gap:6px}}
 .legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 20px}
 .legend li{display:flex;align-items:center;gap:8px;font:500 12px/1.3 var(--f-mono);color:var(--ink-2)}
+.legend .lt{color:var(--ink);font-weight:500}
 .legend .mk{margin:0}
 .tv{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--paper);
   background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:26px 26px;
@@ -276,12 +276,12 @@ a.tc:hover{color:var(--ink)}
 .tc .meta{grid-row:4;font:400 12px/17px var(--f-ui);color:var(--ink-2)}
 .tc .tag{grid-row:5;justify-self:start;align-self:center;display:block;max-width:100%;padding:0 6px;font:500 11px/18px var(--f-ui)}
 .tc .mk{display:none}
-.tc.s-doc{border:2px solid var(--ok);padding:8px 11px}
-.tc.s-version{border:2px solid var(--ver);padding:8px 11px}
-.tc.s-family{border:1.5px solid var(--mid);padding:8.5px 11.5px}
-.tc.s-patr{background:var(--paper);border:1.5px dashed var(--mid);padding:8.5px 11.5px}
+.tc.s-doc{border:2.5px solid var(--ink);padding:7.5px 10.5px}
+.tc.s-version{border:1.5px solid var(--sure-2);padding:8.5px 11.5px}
+.tc.s-family{border:1.5px dashed var(--sure-3);padding:8.5px 11.5px}
+.tc.s-patr{background:var(--paper);border:1.5px dotted var(--sure-4);padding:8.5px 11.5px}
 .tc.s-patr .gn{font-weight:600;color:var(--ink-2)}
-.tc.s-unknown{background:none;border:1px dotted var(--ink-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.tc.s-unknown{background:none;border:1px dotted var(--sure-4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
 .tc.s-unknown .gn{display:block;font:600 26px/1 var(--f-display);color:var(--ink-3)}
 .tc.s-unknown .meta{color:var(--ink-3);font:400 10.5px/1.3 var(--f-mono)}
 .tc.s-living .meta{grid-row:3/5;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:var(--ink-3)}
@@ -291,7 +291,8 @@ a.tc:hover{color:var(--ink)}
 .tc.flash{animation:flash 1.4s ease 2}
 @keyframes flash{50%{box-shadow:0 0 0 8px var(--mark),0 0 0 3px var(--stamp)}}
 .ruler{position:absolute;left:0;top:0;bottom:0;width:0;pointer-events:none}
-.ruler span{position:absolute;left:10px;top:0;white-space:nowrap;padding:3px 10px;border:1px solid var(--rule);border-radius:999px;background:var(--card);color:var(--ink-2);font:500 10.5px/1.3 var(--f-mono)}
+.ruler span{position:absolute;left:10px;top:0;white-space:nowrap;padding:4px 11px;border-radius:999px;background:var(--ink);color:var(--card);font:500 11.5px/1.3 var(--f-mono);box-shadow:0 1px 4px rgba(0,0,0,.22)}
+.ruler b{font-weight:500;margin-right:9px;padding-right:9px;border-right:1px solid rgba(255,255,255,.4)}
 .tv-ctl{position:absolute;right:12px;bottom:12px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:calc(100% - 24px)}
 .tv-ctl .grp{display:flex;align-items:center;background:var(--card);border:1px solid var(--line);overflow:hidden;border-radius:10px}
 .tv-ctl button{height:40px;min-width:40px;padding:0 12px;border:0;border-radius:0;background:var(--card);color:var(--ink);font:600 17px/1 var(--f-name);cursor:pointer}
@@ -495,7 +496,7 @@ footer p{margin:0;max-width:90ch}
 <script>
 const M = window.FAMILY.maps;
 const { DELA, WEB, GEO, LINES, STATUS, REL } = M;
-/* generation headings are impersonal: the living rows by age, the rest by years of birth */
+/* generation headings are impersonal: the living rows by age, the rest by the number of the generation (counted up from the living) and its years of birth */
 const ROWS = { 1: 'Старшее поколение', 0: 'Среднее поколение', '-1': 'Младшее поколение' };
 const born = n => { const m = String(n.d || '').split('–')[0].match(/\d{4}/); return m ? +m[0] : null; };
 const genYears = {};
@@ -505,7 +506,7 @@ function genLabel(g, long) {
   const y = genYears[g];
   if (!y) return `${g}-е колено`;
   const one = y[0] === y[1], span = one ? `${y[0]}` : `${y[0]}–${y[1]}`;
-  return long ? `Родились в ${span} ${one ? 'году' : 'годах'}` : `род. ${span}`;
+  return long ? `${g}-е колено · родились в ${span} ${one ? 'году' : 'годах'}` : `${g}-е колено · род. ${span}`;
 }
 const SLUG = { anatoly:'solin', lyudmilaE:'ershov', alexeyR:'romanov', elena:'nikolaenkov' };
 const LNAME = { solin:'Солины', ershov:'Ершовы', romanov:'Романовы', nikolaenkov:'Николаенковы' };
@@ -656,7 +657,7 @@ function vHome() {
     <div class="sec-head"><h2 class="h2">Древо в миниатюре</h2><a class="more" href="#tree">Открыть древо →</a></div>
     <p class="lede">Ряд — поколение, квадрат — человек: наверху самые ранние предки, внизу ныне живущие. Нажмите на квадрат, чтобы открыть человека на древе.</p>
     <ul class="gens">${mini}</ul>
-    <ul class="legend">${['doc','version','family','patr'].map(st => `<li><i class="sq s-${st}" aria-hidden="true"></i>${esc(STATUS[st].label)}</li>`).join('')}<li><i class="sq s-living" aria-hidden="true"></i>Ныне живущие</li></ul>
+    <ul class="legend"><li class="lt">Уверенность, от большей к меньшей:</li>${['doc','version','family','patr'].map(st => `<li><i class="sq s-${st}" aria-hidden="true"></i>${esc(STATUS[st].label)}</li>`).join('')}<li><i class="sq s-living" aria-hidden="true"></i>Ныне живущие</li></ul>
   </section>
   <section class="sec">
     <div class="sec-head"><h2 class="h2">Четыре линии</h2><a class="more" href="#people">Все люди →</a></div>
@@ -974,7 +975,7 @@ function vTree() {
   view.innerHTML = `
     <header class="tree-head">
       <h1 class="sr">Древо</h1>
-      <ul class="legend">${['doc','version','family','patr'].map(st => `<li>${mk(st)}${esc(STATUS[st].label)}</li>`).join('')}</ul>
+      <ul class="legend"><li class="lt">Уверенность:</li>${['doc','version','family','patr'].map(st => `<li>${mk(st)}${esc(STATUS[st].label)}</li>`).join('')}</ul>
       <div class="th-tools">${searchBox('q-tree', 'Найти на древе')}<ul class="hits" id="hits-tree" hidden></ul></div>
     </header>
     <div class="tstage" id="tstage">
@@ -1117,7 +1118,7 @@ function treeLayout() {
   svg.innerHTML = paths;
   const trunk = ALL.filter(n => n.gen <= TRUNK);
   TL = { W, Ww, Wh, rowTop, rowH, maxGen, cross: bestC, trunk: { x0: Math.min(...trunk.map(n => n.x)), x1: Math.max(...trunk.map(n => n.x + W)), y0: rowTop[TRUNK], y1: Math.max(...trunk.map(n => n.y + n.h)) } };
-  document.getElementById('ruler').innerHTML = Object.keys(rowTop).map(g => `<span data-g="${g}">${esc(genLabel(+g))}</span>`).join('');
+  document.getElementById('ruler').innerHTML = Object.keys(rowTop).map(g => { const [a, b] = genLabel(+g).split(' · '); return `<span data-g="${g}">${b ? `<b>${esc(a)}</b>${esc(b)}` : esc(a)}</span>`; }).join('');
   treeHighlight(lastPerson);
 }
 const clampS = s => Math.min(2, Math.max(minScale(), s));
