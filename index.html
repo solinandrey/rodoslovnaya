@@ -85,6 +85,10 @@ main.full{padding-block:12px 12px;min-height:0}
 /* on the tree page the sheet fills the screen and the page itself never scrolls, so a swipe on the tree can only move the tree */
 html.tree-mode,html.tree-mode body{overscroll-behavior:none}
 html.tree-mode footer{display:none}
+/* In-app browsers (Telegram and others) treat a downward swipe on a page that sits at its very top as "pull the browser down to close".
+   So on the tree page the page is kept scrolled a little: a strip of TREE_PAD px above the header is scrolled out of sight and the page cannot be scrolled by hand. */
+html.tree-mode{overflow:hidden}
+html.tree-mode body{padding-top:100px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .eyebrow{margin:0;font:500 12px/1.4 var(--f-mono);color:var(--ink-2)}
 h1,h2,h3{margin:0;text-wrap:balance}
@@ -1039,11 +1043,17 @@ function vTree() {
   bindPanZoom();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (route.cur === 'tree') { const keep = { ...T }; treeLayout(); T = keep; tApply(false); } });
 }
+const TREE_PAD = 100; /* keep in step with html.tree-mode body{padding-top} */
 function sizeTv() {
   const tv = document.getElementById('tv'); if (!tv) return;
-  const top = tv.getBoundingClientRect().top + scrollY, vh = window.visualViewport ? visualViewport.height : innerHeight;
+  /* the sheet's top as it will be on screen once the page is scrolled to TREE_PAD */
+  const top = tv.getBoundingClientRect().top + scrollY - TREE_PAD, vh = window.visualViewport ? visualViewport.height : innerHeight;
   tv.style.height = Math.max(240, Math.round(vh - top - 12)) + 'px';
 }
+/* hold the tree page at TREE_PAD; leave it alone while an input has focus (the phone keyboard moves the page to show it) */
+function holdTreeScroll() { if (route.cur === 'tree' && !(document.activeElement && document.activeElement.matches('input')) && Math.abs(scrollY - TREE_PAD) > .5) window.scrollTo(0, TREE_PAD); }
+addEventListener('scroll', holdTreeScroll, { passive: true });
+document.addEventListener('focusout', () => setTimeout(holdTreeScroll, 60));
 function vElbow(x1, y1, x2, y2, ym) {
   if (Math.abs(x2 - x1) < 1) return `M${x1} ${y1}V${y2}`;
   const s = Math.sign(x2 - x1), r = Math.min(9, Math.abs(x2 - x1) / 2, y1 - ym, ym - y2);
@@ -1397,9 +1407,9 @@ function route() {
   if (!h || h === 'home') vHome();
   else if (h === 'tree' || h.startsWith('tree/')) {
     cur = 'tree'; const pid = h.slice(5), fresh = route.cur !== 'tree' || !document.getElementById('tv');
-    if (fresh) { view.classList.add('full'); if (P[pid]) focusOnTree = pid; vTree(); }
+    if (fresh) { view.classList.add('full'); document.documentElement.classList.add('tree-mode'); if (P[pid]) focusOnTree = pid; vTree(); }
     panelShow(pid);
-    if (!fresh) { route.n++; return; }
+    if (!fresh) { route.n++; holdTreeScroll(); return; }
   }
   else if (h === 'people') { cur = 'people'; vPeople(); }
   else if (h === 'photos') { cur = 'photos'; vPhotos(); }
@@ -1412,9 +1422,9 @@ function route() {
   view.classList.toggle('full', cur === 'tree');
   document.documentElement.classList.toggle('tree-mode', cur === 'tree');
   document.querySelectorAll('.nav a').forEach(a => { if (a.dataset.v === cur) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-  window.scrollTo(0, 0);
+  window.scrollTo(0, cur === 'tree' ? TREE_PAD : 0);
 }
-let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (route.cur === 'tree') { sizeTv(); tApply(false); } }, 120); });
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (route.cur === 'tree') { sizeTv(); tApply(false); holdTreeScroll(); } }, 120); });
 
 /* ---------- load ---------- */
 (function load() {
