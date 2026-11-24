@@ -548,7 +548,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;
 const isPage = n => n && ['doc','family','version','patr'].includes(n.st);
 /* the living have a card too — a name and family ties, nothing else */
 /* portraits: which photograph shows the face best (and how to crop it); anyone else with photographs gets their first one */
-const FACES = [['flor','flor-1920s.jpg'],['u3','ershova-group.jpg'],['maria','maria-nkps-1927.jpg','93% 45%'],['vstep','vstep-1960.jpg'],['anatoly','anatoly-1954.jpg']];
+const FACES = [['flor','flor-1920s.jpg'],['u3','ershova-group.jpg'],['maria','maria-nkps-1927.jpg','93% 45%'],['vstep','vstep-1960.jpg'],['antonina','antonina-1990s.jpg'],['anatoly','anatoly-1954.jpg']];
 function faceOf(n) {
   if (!n.ph || !n.ph.length) return null;
   const f = FACES.find(x => x[0] === n.id), i = f ? Math.max(0, n.ph.findIndex(x => x.src.endsWith('/' + f[1]))) : 0;
